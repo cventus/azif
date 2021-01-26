@@ -64,7 +64,7 @@ export interface ConditionCard extends DeckCard {
   description?: string[]
 }
 
-export interface InsaneCondition extends ConditionCard, CardFace {
+export interface InsaneConditionCard extends ConditionCard, CardFace {
   type: 'condition'
   condition: 'insane'
   players: number
@@ -139,5 +139,42 @@ export type Card =
   | ConditionCard
   | DamageCard
   | HorrorCard
+  | InsaneConditionCard
   | ItemCard
   | SpellCard
+
+export function isCharacterCard(card: Card): card is CharacterCard {
+  return card.type === 'character'
+}
+
+export function isConditionCard(card: Card): card is ConditionCard {
+  return card.type === 'condition'
+}
+
+export function isDamageCard(card: Card): card is DamageCard {
+  return card.type === 'damage'
+}
+
+export function isHorrorCard(card: Card): card is HorrorCard {
+  return card.type === 'horror'
+}
+
+export function isInsaneConditionCard(card: Card): card is InsaneConditionCard {
+  return card.type === 'condition' && card.condition === 'insane'
+}
+
+export function isItemCard(card: Card): card is ItemCard {
+  return card.type === 'common-item' || card.type === 'unique-item'
+}
+
+export function isCommonItemCard(card: Card): card is ItemCard & { type: 'common-item' } {
+  return card.type === 'common-item'
+}
+
+export function isUniqueItemCard(card: Card): card is ItemCard & { type: 'unique-item' } {
+  return card.type === 'unique-item'
+}
+
+export function isSpellCard(card: Card): card is SpellCard {
+  return card.type === 'spell'
+}
