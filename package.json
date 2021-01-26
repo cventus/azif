@@ -6,7 +6,8 @@
   "license": "MIT",
   "scripts": {
     "build": "webpack bundle --mode development",
-    "start": "webpack serve --name view --mode development --hot"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "start": "webpack serve --name view --mode development --serveIndex false --hot"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
@@ -21,9 +22,12 @@
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "@types/webpack": "^4.41.25",
+    "@typescript-eslint/eslint-plugin": "^4.14.1",
+    "@typescript-eslint/parser": "^4.14.1",
     "aws-sdk": "^2.824.0",
     "babel-loader": "^8.2.2",
     "css-loader": "^5.0.1",
+    "eslint": "^7.18.0",
     "fork-ts-checker-webpack-plugin": "^6.1.0",
     "html-webpack-plugin": "^4.5.1",
     "mini-css-extract-plugin": "^1.3.3",
