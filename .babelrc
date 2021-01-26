@@ -5,6 +5,7 @@
         "@babel/preset-react"
     ],
     "plugins": [
+        ["babel-plugin-styled-components", { "ssr": false }],
         "@babel/plugin-syntax-dynamic-import",
         "@babel/plugin-transform-runtime",
         "@babel/plugin-transform-async-to-generator",
