@@ -37,7 +37,8 @@ const view = {
   entry: ['react-hot-loader/patch', './src/view/index.tsx'],
   output: {
     path: path.join(__dirname, '/dist/view'),
-    filename: 'bundle.js'
+    filename: 'bundle.js',
+    publicPath: '/',
   },
   module: {
     rules: [{
@@ -47,6 +48,7 @@ const view = {
         loader: 'babel-loader',
         options: {
           cacheDirectory: true,
+          plugins: ['react-hot-loader/babel'],
         }
       }
     }, {
@@ -65,6 +67,11 @@ const view = {
       'react-dom': '@hot-loader/react-dom',
     },
   },
+  devServer: {
+    hot: true,
+    publicPath: '/',
+    historyApiFallback: true,
+  },
   plugins: [
     new ForkTsCheckerWebpackPlugin({
       typescript: {
@@ -80,6 +87,7 @@ const view = {
       hash: true,
       filename: 'index.html',
       template: './src/view/index.html',
+      publicPath: '/',
     }),
   ],
 }
