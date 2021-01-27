@@ -1,4 +1,6 @@
 import { combineReducers } from 'redux'
+import { History } from 'history'
+import { connectRouter } from 'connected-react-router'
 
 // export action creators
 export { content } from './content'
@@ -9,7 +11,8 @@ import content from './content'
 import game from './game'
 import messages from './messages'
 
-export default combineReducers({
+export default (history: History) => combineReducers({
+  router: connectRouter(history),
   content,
   game,
   messages,
