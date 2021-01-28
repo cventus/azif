@@ -34,10 +34,13 @@ function lambdaApp(name, entry) {
 const view = {
   name: 'view',
   devtool: 'inline-source-map',
-  entry: ['react-hot-loader/patch', './src/view/index.tsx'],
+  entry: {
+    main: ['react-hot-loader/patch', './src/view/index.tsx'],
+    gallery: ['react-hot-loader/patch', './src/view/gallery.tsx'],
+  },
   output: {
     path: path.join(__dirname, '/dist/view'),
-    filename: 'bundle.js',
+    filename: '[name].bundle.js',
     publicPath: '/',
   },
   module: {
@@ -68,9 +71,12 @@ const view = {
     },
   },
   devServer: {
+    port: 3000,
     hot: true,
     publicPath: '/',
-    historyApiFallback: true,
+    historyApiFallback: {
+      index: 'index.html'
+    },
   },
   plugins: [
     new ForkTsCheckerWebpackPlugin({
@@ -79,7 +85,6 @@ const view = {
           semantic: true,
           syntactic: true,
         },
-        mode: "write-references",
       },
     }),
     new MiniCssExtractPlugin(),
@@ -88,6 +93,20 @@ const view = {
       filename: 'index.html',
       template: './src/view/index.html',
       publicPath: '/',
+      chunks: ['main'],
+      templateParameters: {
+        title: 'Main'
+      },
+    }),
+    new HtmlWebPackPlugin({
+      hash: true,
+      filename: 'gallery.html',
+      template: './src/view/index.html',
+      publicPath: '/',
+      chunks: ['gallery'],
+      templateParameters: {
+        title: 'Gallery'
+      },
     }),
   ],
 }
