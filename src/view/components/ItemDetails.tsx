@@ -75,6 +75,7 @@ const flipOut = keyframes`
 const FlipCard = styled.article`
   margin: 1rem;
   clip-path: inset(0 round 1rem);
+  display: inline-block;
 
   /* exit animations */
   &.STATE_face-up.TO_face-down,
