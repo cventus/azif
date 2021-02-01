@@ -46,7 +46,7 @@ export interface CardFace {
   action?: string[]
 }
 
-interface ItemCardFace extends CardFace {
+export interface ItemCardFace extends CardFace {
   tags?: ItemTag[]
   weapon?: Weapon
 }
