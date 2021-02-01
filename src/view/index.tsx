@@ -1,17 +1,17 @@
 import React from 'react'
 import { render } from 'react-dom'
-import { Provider } from 'react-redux'
+import * as ReactRedux from 'react-redux'
 import App from './app'
 import createStore from './store'
 
 const root = document.createElement('div')
 document.body.appendChild(root)
 
-const store = createStore()
+const [store, history] = createStore()
 
 render(
-  <Provider store={store}>
-    <App />
-  </Provider>,
+  <ReactRedux.Provider store={store}>
+    <App history={history} />
+  </ReactRedux.Provider>,
   root
 )

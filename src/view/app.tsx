@@ -1,16 +1,18 @@
-import React, { useState } from 'react'
 import { hot } from 'react-hot-loader/root'
+import React from 'react'
+import { History } from 'history'
+import { ConnectedRouter } from 'connected-react-router'
 
-import Button from './components/Button'
+interface AppProps {
+  history: History
+}
 
-function App(props: any) {
-  const [counter, setCounter] = useState(0)
-
+function App({ history }: AppProps) {
   return (
-    <>
-       <h1>Title</h1>
-      <Button />
-    </>
+    <ConnectedRouter history={history}>
+      <h1>Main page</h1>
+
+    </ConnectedRouter>
   );
 }
 
