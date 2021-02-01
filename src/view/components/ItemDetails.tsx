@@ -106,11 +106,10 @@ const CardFace = (props: { card: ItemCardFace; type: GameCard['type'] }) => {
   const className = type === 'unique-item' ? 'unique-item' : undefined
   return (
     <CardFront className={className}>
-      {[
         <header>
           <Name>{card.name}</Name>
         </header>,
-        card.weapon && (
+        {card.weapon && (
           <section>
             <table>
               <tbody>
@@ -125,8 +124,8 @@ const CardFace = (props: { card: ItemCardFace; type: GameCard['type'] }) => {
               </tbody>
             </table>
           </section>
-        ),
-        card.tags && (
+        )}
+        {card.tags && (
           <TagList>
             {card.tags.map((tag) => (
               <TagListItem key={tag}>
@@ -134,28 +133,27 @@ const CardFace = (props: { card: ItemCardFace; type: GameCard['type'] }) => {
               </TagListItem>
             ))}
           </TagList>
-        ),
-        card.flavor && (
+        )}
+        {card.flavor && (
           <section>
-            {card.flavor.map((p) => (
-              <Flavor>{p}</Flavor>
+            {card.flavor.map((p, i) => (
+              <Flavor key={i}>{p}</Flavor>
             ))}
           </section>
-        ),
-        card.description && (
+        )}
+        {card.description && (
           <section>
-            {card.description.map((p) => (
-              <Description>{p}</Description>
+            {card.description.map((p, i) => (
+              <Description key={i}>{p}</Description>
             ))}
           </section>
-        ),
-        card.action && (
+        )}
+        {card.action && (
           <section>
             <b>Action: </b>
             {card.action.join(' ')}
           </section>
-        ),
-      ]}
+        )}
     </CardFront>
   )
 }
