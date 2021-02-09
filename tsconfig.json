@@ -2,7 +2,7 @@
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "declaration": true,
+    "declaration": false,
     "isolatedModules": true,
     "importHelpers": true,
     "sourceMap": true,
