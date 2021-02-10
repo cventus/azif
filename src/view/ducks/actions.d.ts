@@ -1,4 +1,5 @@
 import { content } from './content'
+import { connection } from './connection'
 import { messages } from './messages'
 import { game } from './game'
 
@@ -9,6 +10,7 @@ type ActionTypesOf<
 
 export type Action =
   | { type: undefined }
+  | ActionTypesOf<typeof connection>
   | ActionTypesOf<typeof content>
   | ActionTypesOf<typeof messages>
   | ActionTypesOf<typeof game>
