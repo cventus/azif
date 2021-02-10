@@ -3,8 +3,9 @@ const webpack = require('webpack')
 const HtmlWebPackPlugin = require('html-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
+const { RunScriptWebpackPlugin } = require('run-script-webpack-plugin')
 
-const extensions = [".ts", ".tsx", ".mjs", ".cjs", ".js", ".json", ".wasm"]
+const extensions = ['.ts', '.tsx', '.mjs', '.cjs', '.js', '.json', '.wasm']
 
 function lambdaApp(name, entry) {
   return {
@@ -25,7 +26,7 @@ function lambdaApp(name, entry) {
     target: 'node',
     externals: ['aws-sdk'],
     output: {
-      filename: `${name}/bundle.js`,
+      filename: `[name].bundle.js`,
       path: path.resolve(__dirname, 'dist'),
     },
   }
@@ -33,7 +34,7 @@ function lambdaApp(name, entry) {
 
 const view = {
   name: 'view',
-  devtool: 'inline-source-map',
+  devtool: 'eval',
   entry: {
     main: ['react-hot-loader/patch', './src/view/index.tsx'],
     gallery: ['react-hot-loader/patch', './src/view/gallery.tsx'],
@@ -77,6 +78,7 @@ const view = {
     historyApiFallback: {
       index: 'index.html'
     },
+    writeToDisk: true,
   },
   plugins: [
     new ForkTsCheckerWebpackPlugin({
@@ -111,7 +113,47 @@ const view = {
   ],
 }
 
+const server = {
+  name: 'server',
+  entry: {
+    main: ['webpack/hot/signal', './src/server/index.ts'],
+  },
+  output: {
+    path: path.join(__dirname, '/dist/server'),
+    filename: '[name].bundle.js',
+    publicPath: '/',
+  },
+  target: 'node',
+  module: {
+    rules: [{
+      test: /\.ts?$/,
+      exclude: /node_modules/,
+      use: {
+        loader: 'babel-loader',
+        options: {
+          cacheDirectory: true,
+        }
+      }
+    }]
+  },
+  resolve: {
+    extensions,
+  },
+  plugins: [
+    new ForkTsCheckerWebpackPlugin({
+      typescript: {
+        diagnosticOptions: {
+          semantic: true,
+          syntactic: true,
+        },
+      },
+    }),
+    new RunScriptWebpackPlugin({ signal: true }),
+  ],
+}
+
 module.exports = [
   view,
   lambdaApp('lambda', './src/lambda/index.ts'),
+  server,
 ]

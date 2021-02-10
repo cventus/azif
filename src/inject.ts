@@ -64,7 +64,7 @@ type CompleteAssembly<
   { create: (resolved: AssemblyTypes<Providers>) => unknown }
 >
 
-interface Assembly<Providers extends Record<string, Provider<any, any>>> {
+export interface Assembly<Providers extends Record<string, Provider<any, any>>> {
   get<Name extends keyof Providers>(name: Name): InjectableType<Providers[Name]>
   destroy(): Promise<void>
 }
@@ -104,7 +104,7 @@ export async function assemble<
 
     if (destroy) {
       // Prepend to list so that in-order traveral destroys components in FILO order
-      destroyables.unshift(() => Promise.resolve(destroy(components)))
+      destroyables.unshift(() => Promise.resolve(destroy(component)))
     }
 
     return component
@@ -120,7 +120,11 @@ export async function assemble<
       const list = destroyables
       destroyables = []
       for (const destroyCallback of list) {
-        await destroyCallback()
+        try {
+          await destroyCallback()
+        } catch (e) {
+          console.error('Unable to destroy:', e)
+        }
       }
     },
   }
