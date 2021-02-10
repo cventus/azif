@@ -1,37 +1,18 @@
 import { defineActions } from './lib'
 import { Action } from './actions'
 import { Reducer } from 'redux'
-import { DieRoll } from '../../game/dice'
+import { GameEvent } from '../../game/protocol'
 
-export const messages = defineActions('messages', {
-  add: (message: Message) => ({ message }),
-  remove: (messageId: Message['id']) => ({ messageId }),
-})
+export const messages = defineActions('messages', {})
 
-interface MessageCommon {
-  id: string
-  author: string
-  time: string
-}
-
-export interface DieRollMessage extends MessageCommon {
-  type: 'roll'
-  roll: DieRoll[]
-}
-
-export interface ChatMessage extends MessageCommon {
-  type: 'chat'
-  text: string
-}
-
-export type Message = DieRollMessage | ChatMessage
+export type DatedMessage = GameEvent & { date: Date }
 
 export interface MessageState {
-  messages: Message[]
+  gameEvents: DatedMessage[]
 }
 
 const defaultState: MessageState = {
-  messages: [],
+  gameEvents: [],
 }
 
 const reducer: Reducer<MessageState, Action> = (
@@ -39,18 +20,25 @@ const reducer: Reducer<MessageState, Action> = (
   action = { type: undefined },
 ) => {
   switch (action.type) {
-    case 'messages/add':
-      return {
-        messages: [action.message, ...state.messages],
+    case 'connection/serverMessage': {
+      const serverMessage = action.message
+      if (serverMessage.type === 'game-event') {
+        const gameEvent: DatedMessage = {
+          ...serverMessage.event,
+          date: new Date(serverMessage.event.epoch),
+        }
+        return {
+          ...state,
+          gameEvents: [...state.gameEvents, gameEvent],
+        }
+      } else {
+        return state
       }
+    }
 
-    case 'messages/remove':
-      return {
-        messages: state.messages.filter((msg) => msg.id !== action.messageId),
-      }
-
-    default:
+    default: {
       return state
+    }
   }
 }
 

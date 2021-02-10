@@ -16,5 +16,5 @@ render(
   <ReactRedux.Provider store={store}>
     <App history={history} />
   </ReactRedux.Provider>,
-  root
+  root,
 )
