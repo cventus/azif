@@ -64,7 +64,9 @@ type CompleteAssembly<
   { create: (resolved: AssemblyTypes<Providers>) => unknown }
 >
 
-export interface Assembly<Providers extends Record<string, Provider<any, any>>> {
+export interface Assembly<
+  Providers extends Record<string, Provider<any, any>>
+> {
   get<Name extends keyof Providers>(name: Name): InjectableType<Providers[Name]>
   destroy(): Promise<void>
 }

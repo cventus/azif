@@ -167,11 +167,15 @@ export function isItemCard(card: Card): card is ItemCard {
   return card.type === 'common-item' || card.type === 'unique-item'
 }
 
-export function isCommonItemCard(card: Card): card is ItemCard & { type: 'common-item' } {
+export function isCommonItemCard(
+  card: Card,
+): card is ItemCard & { type: 'common-item' } {
   return card.type === 'common-item'
 }
 
-export function isUniqueItemCard(card: Card): card is ItemCard & { type: 'unique-item' } {
+export function isUniqueItemCard(
+  card: Card,
+): card is ItemCard & { type: 'unique-item' } {
   return card.type === 'unique-item'
 }
 

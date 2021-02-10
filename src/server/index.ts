@@ -1,5 +1,4 @@
 import { main } from './main'
-
 ;(async () => {
   let destroy = await main()
   let isUpdating = false

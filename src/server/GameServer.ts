@@ -21,9 +21,7 @@ interface Credentials {
   password: string
 }
 
-function getAuthentication(
-  authorization?: string,
-): Credentials | undefined {
+function getAuthentication(authorization?: string): Credentials | undefined {
   const [, hash] = authorization?.match(/Basic\s+(\w+)/i) || []
   if (hash) {
     const decoded = Buffer.from(hash, 'base64').toString('utf-8')

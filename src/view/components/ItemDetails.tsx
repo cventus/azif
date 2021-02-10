@@ -106,54 +106,55 @@ const CardFace = (props: { card: ItemCardFace; type: GameCard['type'] }) => {
   const className = type === 'unique-item' ? 'unique-item' : undefined
   return (
     <CardFront className={className}>
-        <header>
-          <Name>{card.name}</Name>
-        </header>,
-        {card.weapon && (
-          <section>
-            <table>
-              <tbody>
-                <tr>
-                  <th scope="row">Range</th>
-                  <td>{card.weapon.range}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Damage</th>
-                  <td>{card.weapon.damage}</td>
-                </tr>
-              </tbody>
-            </table>
-          </section>
-        )}
-        {card.tags && (
-          <TagList>
-            {card.tags.map((tag) => (
-              <TagListItem key={tag}>
-                <TagName>{TagNames[tag]}</TagName>
-              </TagListItem>
-            ))}
-          </TagList>
-        )}
-        {card.flavor && (
-          <section>
-            {card.flavor.map((p, i) => (
-              <Flavor key={i}>{p}</Flavor>
-            ))}
-          </section>
-        )}
-        {card.description && (
-          <section>
-            {card.description.map((p, i) => (
-              <Description key={i}>{p}</Description>
-            ))}
-          </section>
-        )}
-        {card.action && (
-          <section>
-            <b>Action: </b>
-            {card.action.join(' ')}
-          </section>
-        )}
+      <header>
+        <Name>{card.name}</Name>
+      </header>
+      ,
+      {card.weapon && (
+        <section>
+          <table>
+            <tbody>
+              <tr>
+                <th scope="row">Range</th>
+                <td>{card.weapon.range}</td>
+              </tr>
+              <tr>
+                <th scope="row">Damage</th>
+                <td>{card.weapon.damage}</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      )}
+      {card.tags && (
+        <TagList>
+          {card.tags.map((tag) => (
+            <TagListItem key={tag}>
+              <TagName>{TagNames[tag]}</TagName>
+            </TagListItem>
+          ))}
+        </TagList>
+      )}
+      {card.flavor && (
+        <section>
+          {card.flavor.map((p, i) => (
+            <Flavor key={i}>{p}</Flavor>
+          ))}
+        </section>
+      )}
+      {card.description && (
+        <section>
+          {card.description.map((p, i) => (
+            <Description key={i}>{p}</Description>
+          ))}
+        </section>
+      )}
+      {card.action && (
+        <section>
+          <b>Action: </b>
+          {card.action.join(' ')}
+        </section>
+      )}
     </CardFront>
   )
 }
