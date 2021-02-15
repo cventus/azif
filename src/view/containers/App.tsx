@@ -1,11 +1,10 @@
 import { hot } from 'react-hot-loader/root'
-import React, { Component, FormEvent, Ref, useCallback, useRef } from 'react'
+import React, { FormEvent, Ref, useCallback, useRef } from 'react'
 import { History } from 'history'
 import { ConnectedRouter } from 'connected-react-router'
-import { useDispatch, useSelector } from './store'
-import { connection } from './ducks/connection'
-import { GameEvent } from '../game/protocol'
-import { DatedMessage } from './ducks/messages'
+import { useDispatch, useSelector } from './../store'
+import { connection } from '../ducks/connection'
+import { DatedMessage } from '../ducks/messages'
 
 interface AppProps {
   history: History

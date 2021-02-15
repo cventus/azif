@@ -1,7 +1,7 @@
 import React from 'react'
 import { render } from 'react-dom'
 import * as ReactRedux from 'react-redux'
-import App from './app'
+import App from './containers/App'
 import { connection } from './ducks'
 import createStore from './store'
 
