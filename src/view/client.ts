@@ -1,6 +1,8 @@
+import { replace } from 'connected-react-router'
 import { Middleware } from 'redux'
 import { ClientSocket, ClientConfig } from './ClientSocket'
 import { Action } from './ducks/actions'
+import { toGamesPage } from './paths'
 
 export const clientMiddleware: (config: ClientConfig) => Middleware = (
   config,
@@ -26,6 +28,12 @@ export const clientMiddleware: (config: ClientConfig) => Middleware = (
       case 'connection/logout':
         socket.logout()
         break
+
+      case 'connection/setStatus':
+        if (action.status === 'connected') {
+          dispatch(replace(toGamesPage()))
+        }
+        return next(action)
 
       default: {
         return next(action)

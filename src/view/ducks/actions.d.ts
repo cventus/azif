@@ -2,6 +2,7 @@ import { content } from './content'
 import { connection } from './connection'
 import { messages } from './messages'
 import { game } from './game'
+import { LocationChangeAction } from 'connected-react-router'
 
 type ActionTypesOf<
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -14,3 +15,4 @@ export type Action =
   | ActionTypesOf<typeof content>
   | ActionTypesOf<typeof messages>
   | ActionTypesOf<typeof game>
+  | LocationChangeAction

@@ -7,6 +7,7 @@ import content from './content'
 import game from './game'
 import messages from './messages'
 import connection from './connection'
+import view from './view'
 
 // export action creators
 export { content } from './content'
@@ -21,4 +22,5 @@ export default (history: History) =>
     content,
     game,
     messages,
+    view: view(history),
   })
