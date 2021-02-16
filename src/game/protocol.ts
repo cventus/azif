@@ -7,6 +7,8 @@ import {
 } from '../structure'
 import { DieRoll } from './dice'
 
+const EpochMs = Number
+
 export type CardFacing = 'face-up' | 'face-down'
 
 const dieRoll = Union(
@@ -89,17 +91,67 @@ const PlayerEvent = {
   gameId: String,
   eventId: Number,
   playerId: String,
-  epoch: Number,
+  epoch: EpochMs,
 }
 type PlayerEvent = StructureType<typeof PlayerEvent>
-
-const isPlayerEvent = validate(PlayerEvent)
 
 const GameEvent = Intersection(PlayerEvent, PlayerAction)
 
 export type GameEvent = StructureType<typeof GameEvent>
-export function isGameEvent(value: unknown): value is GameEvent {
-  return isPlayerAction(value) && isPlayerEvent(value)
+export const isGameEvent = validate(GameEvent)
+
+const ResourceType = Union(
+  Literal('game'),
+  Literal('profile'),
+  Literal('content'),
+)
+
+const Profile = {
+  id: String,
+  name: String,
+  gameIds: Array(String),
+  recentGameId: String,
+  recentGameTime: EpochMs,
+}
+export type Profile = StructureType<typeof Profile>
+
+const GameState = Union(
+  Literal('starting'),
+  Literal('on-going'),
+  Literal('over'),
+)
+
+const Player = {
+  id: String,
+  name: String,
+  characterId: String,
+}
+
+const CharacterInventory = {
+  characterId: String,
+  items: Array(String),
+  damages: Array(String),
+  horros: Array(String),
+  clues: Number,
+}
+
+const Game = {
+  id: String,
+  name: String,
+  state: GameState,
+  contentSets: Array(String),
+  players: Array(Player),
+  inventories: Array(CharacterInventory),
+  flippedCards: Array(String),
+}
+
+const Card = {
+
+}
+
+const Content = {
+  id: String,
+  cards: Array(Card),
 }
 
 const PlayerActionMessage = {
@@ -108,16 +160,56 @@ const PlayerActionMessage = {
 }
 type PlayerActionMessage = StructureType<typeof PlayerActionMessage>
 
-const ClientMessage = Union(PlayerActionMessage)
+const PlayerGetRequest = {
+  type: Literal('player-get-request'),
+  resource: ResourceType,
+  requestId: String,
+  resourceId: String,
+}
+type PlayerGetRequest = StructureType<typeof PlayerActionMessage>
+
+const ClientMessage = Union(
+  PlayerActionMessage,
+  PlayerGetRequest,
+)
 export type ClientMessage = StructureType<typeof ClientMessage>
 export const isClientMessage = validate(ClientMessage)
 
 const GameEventMessage = {
-  type: Literal('game-event'),
+  type: Literal('server-game-event'),
   event: GameEvent,
 }
 export type GameEventMessage = StructureType<typeof GameEventMessage>
 
-const ServerMessage = Union(GameEventMessage)
+const ServerGetGameResponse = {
+  type: Literal('server-get-response'),
+  resource: Literal('game'),
+  requestId: String,
+  resourceId: String,
+  game: Game,
+}
+
+const ServerGetProfileResponse = {
+  type: Literal('server-get-response'),
+  resource: Literal('profile'),
+  requestId: String,
+  resourceId: String,
+  profile: Profile,
+}
+
+const ServerGetContentResponse = {
+  type: Literal('server-get-response'),
+  resource: Literal('content'),
+  requestId: String,
+  resourceId: String,
+  content: Content,
+}
+
+const ServerMessage = Union(
+  GameEventMessage,
+  ServerGetGameResponse,
+  ServerGetProfileResponse,
+  ServerGetContentResponse,
+)
 export type ServerMessage = StructureType<typeof ServerMessage>
 export const isServerMessage = validate(ServerMessage)

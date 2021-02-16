@@ -51,7 +51,7 @@ function handleClientMessage(
 ): void {
   if (message.type === 'player-action') {
     const gameEvent: GameEventMessage = {
-      type: 'game-event',
+      type: 'server-game-event',
       event: {
         ...message.action,
         eventId: getMessageId(),
