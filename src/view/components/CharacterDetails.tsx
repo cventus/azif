@@ -1,6 +1,15 @@
 import React from 'react'
-import { Abilities, Ability, CharacterCard } from '../../game/rules'
+import { Ability, CharacterCard } from '../../game/rules'
 import styled from 'styled-components'
+
+const abilities: Ability[] = [
+  'strength',
+  'agility',
+  'observation',
+  'lore',
+  'influence',
+  'will',
+]
 
 const Name = styled.h1``
 
@@ -52,7 +61,7 @@ const CharacterDetails = ({ character }: CharacterDescriptionProps) => {
         <SectionHeader>Abilities</SectionHeader>
         <table>
           <tbody>
-            {Abilities.map((ability) => (
+            {abilities.map((ability) => (
               <tr key={ability}>
                 <th scope="row">{abilityNames[ability]}</th>
                 <td>{character.abilities[ability]}</td>

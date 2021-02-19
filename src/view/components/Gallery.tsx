@@ -6,6 +6,7 @@ import CharacterDetails from './CharacterDetails'
 
 const characterCard: CharacterCard = {
   id: 'my-character',
+  set: 'test',
   name: 'John Doe',
   title: 'The Character',
   type: 'character',
@@ -32,6 +33,7 @@ const characterCard: CharacterCard = {
 
 const itemCard: ItemCard = {
   id: 'my-item',
+  set: 'test',
   name: 'Power supply',
   type: 'common-item',
   action: ['Plug this in to get a jolt'],
