@@ -24,12 +24,14 @@ interface SettingsPage {
 }
 
 interface GameEventsPage {
-  pageId: 'game-events'
+  pageId: 'game'
+  subPageId: 'events'
   gameId: string
 }
 
 interface GameCharacterPage {
-  pageId: 'game-character'
+  pageId: 'game'
+  subPageId: 'character'
   gameId: string
   characterId: string
 }
@@ -56,12 +58,12 @@ function getPage(location: Location): Page | undefined {
   const gameEvents = isGameEventsPage(path)
   if (gameEvents) {
     const [gameId] = gameEvents
-    return { pageId: 'game-events', gameId }
+    return { pageId: 'game', subPageId: 'events', gameId }
   }
   const gameCharacter = isGameCharactersPage(path)
   if (gameCharacter) {
     const [gameId, characterId] = gameCharacter
-    return { pageId: 'game-character', gameId, characterId }
+    return { pageId: 'game', subPageId: 'character', gameId, characterId }
   }
   return undefined
 }

@@ -9,7 +9,6 @@ import AuthenticationContainer from './AuthenticationContainer'
 import GamesContainer from './GamesContainer'
 import SettingsContainer from './SettingsContainer'
 import GameEventsContainer from './GameEventsContainer'
-import GameCharacterContainer from './GameCharacterContainer'
 
 interface AppProps {
   history: History
@@ -18,7 +17,7 @@ interface AppProps {
 export const MainView = styled.main`
 `
 
-const MainViewState = withVisualState(MainView, ['front', 'games', 'settings', 'game-events', 'game-character', 'unknown'])
+const MainViewState = withVisualState(MainView, ['front', 'games', 'settings', 'game', 'unknown'])
 
 const App: React.FC<AppProps> = ({ history }) => {
   const page = useSelector((state) => state.view.page)
@@ -35,8 +34,7 @@ const App: React.FC<AppProps> = ({ history }) => {
           { states.includes('front') && <AuthenticationContainer /> }
           { states.includes('games') && <GamesContainer /> }
           { states.includes('settings') && <SettingsContainer /> }
-          { states.includes('game-events') && <GameEventsContainer /> }
-          { states.includes('game-character') && <GameCharacterContainer /> }
+          { states.includes('game') && <GameEventsContainer /> }
         </>
         )
       }}</MainViewState>
