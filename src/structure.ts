@@ -1,5 +1,6 @@
 export const Tag: unique symbol = Symbol('Tag')
 export const LiteralValue: unique symbol = Symbol('Literal')
+export const OptionalField: unique symbol = Symbol('Optional')
 
 export interface Literal<T extends null | boolean | number | string> {
   [LiteralValue]: T
@@ -9,6 +10,16 @@ export const Literal = <T extends null | boolean | number | string>(
   literal: T,
 ): Literal<T> =>
   Object.defineProperty({}, LiteralValue, { value: literal, enumerable: true })
+
+export interface Optional<T> {
+  [OptionalField]: T
+}
+
+export const Optional = <T>(structure: T): Optional<T> =>
+  Object.defineProperty({}, OptionalField, {
+    value: structure,
+    enumerable: true,
+  })
 
 type TaggedArray<T extends [...unknown[]], TagName extends string> = {
   [Tag]: TagName
@@ -69,6 +80,24 @@ type IntersectionOfTuple<T extends unknown[]> = Unwrap<
 
 type MapStructureType<T> = { [key in keyof T]: StructureType<T[key]> }
 
+type OptionalKeys<T, K extends keyof T> = K extends keyof T
+  ? T[K] extends Optional<unknown>
+    ? K
+    : never
+  : never
+
+type Identity<T> = { -readonly [key in keyof T]: T[key] }
+
+type UnpackOptional<T> = T extends Optional<infer U> ? U : T
+type ObjectStructureType<T> = Identity<
+  {
+    [key in Exclude<keyof T, OptionalKeys<T, keyof T>>]: StructureType<T[key]>
+  } &
+    {
+      [key in OptionalKeys<T, keyof T>]?: StructureType<UnpackOptional<T[key]>>
+    }
+>
+
 export type StructureType<T> = T extends Literal<infer U>
   ? U
   : T extends typeof Boolean
@@ -86,7 +115,7 @@ export type StructureType<T> = T extends Literal<infer U>
   : T extends unknown[]
   ? MapStructureType<T>
   : T extends Readonly<Record<string, unknown>>
-  ? { -readonly [key in keyof T]: StructureType<T[key]> }
+  ? ObjectStructureType<T>
   : T extends () => infer U
   ? StructureType<U>
   : never
@@ -167,9 +196,17 @@ function validateObject<T>(
   if (structures === null) {
     throw new TypeError('argument must not be null')
   }
+  const optionalFields = new Set<string>()
   type Predicate = (value: unknown) => boolean
   const predicates: [string, Predicate][] = Object.entries(structures).map(
     ([key, value]) => {
+      let predicate: Predicate
+      if (hasField(value, OptionalField)) {
+        predicate = validate(value[OptionalField])
+        optionalFields.add(key)
+      } else {
+        predicate = validate(value)
+      }
       return [key, validate(value)] as [string, Predicate]
     },
   )
@@ -183,7 +220,10 @@ function validateObject<T>(
     }
     for (const [key, predicate] of predicates) {
       if (!hasField(value, key)) {
-        return false
+        return optionalFields.has(key)
+      }
+      if (value[key] === undefined) {
+        return optionalFields.has(key)
       }
       if (!predicate(value[key])) {
         return false
