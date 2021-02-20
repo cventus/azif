@@ -1,4 +1,4 @@
-import { inject, assemble } from '../src/inject'
+import { inject, assemble } from '../src/inject'
 
 // Declare injectable Colors:string[]
 const Colors = inject<string[]>()
