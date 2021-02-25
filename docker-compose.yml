@@ -1,0 +1,11 @@
+version: "3.7"
+
+services:
+  dynamodb:
+    image: amazon/dynamodb-local
+    restart: always
+    container_name: vansinnig-dynamodb
+    expose:
+      - 8000
+    ports:
+        - "8000:8000"
