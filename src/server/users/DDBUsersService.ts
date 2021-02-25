@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import { promisify } from 'util'
 
+import { Logger } from '../logger'
 import { inject } from '../../inject'
 import { Delete, DocumentClient, Get, Put, Update } from '../ddb/DocumentClient'
 import { TableConfig } from '../ddb/TableConfig'
@@ -140,8 +141,8 @@ export const CredentialsTableActions = (TableName: string) => ({
 })
 
 export const DDBUsersService = inject(
-  { DocumentClient, TableConfig },
-  ({ DocumentClient: client, TableConfig }) => {
+  { DocumentClient, TableConfig, Logger },
+  ({ DocumentClient: client, TableConfig, Logger: logger }) => {
     const TableName = TableConfig.tables.users
 
     async function getCredentials(
@@ -182,12 +183,12 @@ export const DDBUsersService = inject(
           }
           const user: UserItem | undefined = await getUser(credentials.userId)
           if (!user) {
-            console.warn(`No user found despite matching credentials: ${username}`)
+            logger.warn('No user found despite matching credentials', { username })
             return
           }
           return itemToUser(user)
         } catch (e) {
-          console.error('authenticate', e)
+          logger.error('authenticate', e)
           return undefined
         }
       },
@@ -278,7 +279,7 @@ export const DDBUsersService = inject(
             gameIds: [],
           } as User
         } catch (e) {
-          console.error(`Failed to insert user ${credentials.username}`)
+          logger.error({ newUser: { username: credentials.username } }, 'Failed to create user')
           throw e
         }
       },
@@ -312,7 +313,6 @@ export const DDBUsersService = inject(
           })
           .promise()
         if (!isUserItem(user)) {
-          console.error(user)
           throw new Error('Bad user returned')
         }
         return itemToUser(user)
@@ -348,7 +348,7 @@ export const DDBUsersService = inject(
             })
             .promise()
         } catch (e) {
-          console.error(e)
+          logger.error({ err: e, userId, username }, 'Failed to set username')
           throw e
         }
       },

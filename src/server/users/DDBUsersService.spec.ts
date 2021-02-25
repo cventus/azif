@@ -4,6 +4,7 @@ import { TestModule } from '../ddb/TestClient'
 import { DDBUsersService } from './DDBUsersService'
 import { UsersService } from './UsersService'
 import { User } from '.'
+import { SilentLogger } from '../logger'
 
 describe('DDBUsersService', () => {
   let service: UsersService
@@ -12,6 +13,7 @@ describe('DDBUsersService', () => {
   beforeEach(async () => {
     const assembly = await assemble({
       ...TestModule,
+      Logger: SilentLogger,
       DDBUsersService,
     })
     service = assembly.get('DDBUsersService')
