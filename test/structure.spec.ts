@@ -1,14 +1,12 @@
 import {
+  Dictionary,
   Intersection,
   Literal,
   Optional,
-  StructureType,
   Tuple,
   Union,
   validate,
 } from '../src/structure'
-
-declare const foo: unknown
 
 describe('validate', () => {
   it('should validate booleans', () => {
@@ -151,6 +149,18 @@ describe('validate', () => {
     expect(isObject({ type: 'type' })).toBe(true)
 
     expect(isObject({ type: 'type', payload: 'hello' })).toBe(false)
+  })
+
+  it('should validate dictionary objects', () => {
+    const isDict = validate(Dictionary(Union(String, Number)))
+
+    expect(isDict({ type: 'type', id: 42 })).toBe(true)
+    expect(isDict({ type: 'type' })).toBe(true)
+    expect(isDict({ id: 42 })).toBe(true)
+
+    expect(isDict(null)).toBe(false)
+    expect(isDict('hello')).toBe(false)
+    expect(isDict({ type: ['something'] })).toBe(false)
   })
 
   it('should validate recursive structure', () => {

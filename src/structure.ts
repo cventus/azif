@@ -1,5 +1,6 @@
 export const Tag: unique symbol = Symbol('Tag')
 export const LiteralValue: unique symbol = Symbol('Literal')
+export const DictionaryValue: unique symbol = Symbol('Dictionary')
 export const OptionalField: unique symbol = Symbol('Optional')
 
 export interface Literal<T extends null | boolean | number | string> {
@@ -17,6 +18,16 @@ export interface Optional<T> {
 
 export const Optional = <T>(structure: T): Optional<T> =>
   Object.defineProperty({}, OptionalField, {
+    value: structure,
+    enumerable: true,
+  })
+
+export interface Dictionary<T> {
+  [DictionaryValue]: T
+}
+
+export const Dictionary = <T>(structure: T): Dictionary<T> =>
+  Object.defineProperty({}, DictionaryValue, {
     value: structure,
     enumerable: true,
   })
@@ -112,6 +123,8 @@ export type StructureType<T> = T extends Literal<infer U>
   ? IntersectionOfTuple<U>
   : T extends Tuple<infer U>
   ? MapStructureType<U>
+  : T extends Dictionary<infer U>
+  ? Record<string, StructureType<U>>
   : T extends unknown[]
   ? MapStructureType<T>
   : T extends Readonly<Record<string, unknown>>
@@ -184,6 +197,28 @@ function validateArray<T>(
 
   return (value: unknown): value is T => {
     return Array.isArray(value) && value.every(predicate)
+  }
+}
+
+function validateDictionary<T>(
+  structure: unknown,
+): (value: unknown) => value is T {
+  const predicate = validate(structure)
+
+  return (value: unknown): value is T => {
+    if (typeof value !== 'object') {
+      return false
+    }
+    if (value === null) {
+      return false
+    }
+    for (let key of Object.keys(value)) {
+      if (!predicate((value as Record<string, unknown>)[key])) {
+        return false
+      }
+
+    }
+    return true
   }
 }
 
@@ -299,6 +334,11 @@ export function validate<T extends unknown>(
       }
       return predicate(value)
     }
+  }
+
+  // Uniform map
+  if (hasField(structure, DictionaryValue)) {
+    return validateDictionary(structure[DictionaryValue])
   }
 
   // Object
