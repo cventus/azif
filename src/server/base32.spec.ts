@@ -1,4 +1,4 @@
-import { encodeBase32, normalizeBase32 } from '../../src/server/base32'
+import { encodeBase32, normalizeBase32 } from './base32'
 
 describe('encodeBase32()', () => {
   it('should encode "1" to "64"', async () => {

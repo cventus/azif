@@ -6,7 +6,7 @@ import {
   Tuple,
   Union,
   validate,
-} from '../src/structure'
+} from './structure'
 
 describe('validate', () => {
   it('should validate booleans', () => {

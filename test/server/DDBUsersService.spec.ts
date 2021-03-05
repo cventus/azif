@@ -1,10 +1,10 @@
-import { assemble } from '../../inject'
+import { assemble } from '../../src/inject'
 
-import { TestModule } from '../ddb/TestClient'
-import { DDBUsersService } from './DDBUsersService'
-import { UsersService } from './UsersService'
-import { User } from '.'
-import { SilentLogger } from '../logger'
+import { TestModule } from '../../src/server/ddb/TestClient'
+import { DDBUsersService } from '../../src/server/users/DDBUsersService'
+import { UsersService } from '../../src/server/users/UsersService'
+import { User } from '../../src/server/users'
+import { SilentLogger } from '../../src/server/logger'
 
 describe('DDBUsersService', () => {
   let service: UsersService
