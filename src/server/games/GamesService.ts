@@ -1,48 +1,78 @@
-import { inject } from "../../inject";
+import { inject } from '../../inject'
 
-export type GameState = 'starting' | 'on-going' | 'over'
+export type GameStateName = 'starting' | 'on-going' | 'over'
 
-export interface Player {
-  userId: string
-  characterId: string
+export interface PlayerState {
+  characterId?: string
 }
 
 export interface CharacterState {
+  playerId: string
   cardIds: string[]
   clues: number
 }
 
-export interface Game {
+export interface GameState {
   id: string
+  clock: number
   name: string
-  state: GameState
+  state: GameStateName
+  createdAt: number
   contentSetIds: string[]
-  numberOfPlayers: number
-  players: Player[]
-  socketIds: string[]
-  characterStates: Record<string, CharacterState>
+  players: Record<string, PlayerState>
+  characters: Record<string, CharacterState>
   flippedCardIds: string[]
 }
 
-export type StartGameStatus = 'ok' | 'already-started' | 'awaiting-players' | 'players-not-ready' | 'game-not-found'
+interface Result<T, S extends string = 'success' | 'failure'> {
+  status: S
+  message?: string
+  result: T
+}
 
-export type EndGameStatus = 'ok' | 'already-ended' | 'game-not-found'
-
-export type AddPlayerStatus = 'ok' | 'already-added' | 'player-not-found' | 'game-not-found'
-
-export type RemovePlayerStatus = 'ok' | 'not-a-member' | 'player-not-found' | 'game-not-found'
+interface Success<T> extends Result<T, 'success'> {}
+type Failure = 'failure'
 
 export interface GamesService {
-  createGame(name: string, numberOfPlayers: number, contentSetIds: string[]): Promise<Game>
-  getGame(gameId: string): Promise<Game | undefined>
-  startGame(gameId: string): Promise<StartGameStatus>
-  endGame(gameId: string): Promise<EndGameStatus>
-  addPlayer(gameId: string, playerId: string): Promise<AddPlayerStatus>
-  removePlayer(gameId: string, playerId: string): Promise<RemovePlayerStatus>
-  addClues(gameId: string, playerId: string, clues: number): Promise<void>
-  addCard(gameId: string, playerId: string, cardId: string): Promise<void>
-  removeCard(gameId: string, playerId: string, cardId: string): Promise<void>
-  flipCard(gameId: string, playerId: string, cardId: string, isFlipped?: boolean): Promise<void>
+  createGame(name: string, contentSetIds: string[]): Promise<GameState>
+  getGame(gameId: string): Promise<GameState | undefined>
+  startGame(gameId: string): Promise<GameState | Failure>
+  endGame(gameId: string): Promise<GameState | Failure>
+
+  // Player management
+  addPlayer(gameId: string, playerId: string): Promise<GameState | Failure>
+  removePlayer(gameId: string, playerId: string): Promise<GameState | Failure>
+
+  switchCharacter(
+    gameId: string,
+    playerId: string,
+    fromCharacterId: string | null,
+    toCharacterId: string,
+  ): Promise<GameState | Failure>
+
+  // Game changes
+  addClues(
+    gameId: string,
+    characterId: string,
+    cluesDelta: number,
+  ): Promise<GameState | Failure>
+  addCard(
+    gameId: string,
+    characterId: string,
+    cardId: string,
+  ): Promise<GameState | Failure>
+  moveCard(
+    gameId: string,
+    fromCharacterId: string,
+    toCharacterId: string,
+    cardId: string,
+  ): Promise<GameState | Failure>
+  removeCard(gameId: string, cardId: string): Promise<GameState | Failure>
+  setCardFacing(
+    gameId: string,
+    cardId: string,
+    facing: 'up' | 'down',
+  ): Promise<GameState | Failure>
 }
 
 export const GamesService = inject<GamesService>()

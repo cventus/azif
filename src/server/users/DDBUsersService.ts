@@ -3,15 +3,16 @@ import { promisify } from 'util'
 
 import { Logger } from '../logger'
 import { inject } from '../../inject'
-import { Delete, DocumentClient, Get, Put, Update } from '../ddb/DocumentClient'
-import { TableConfig } from '../ddb/TableConfig'
 import {
-  Literal,
-  Optional,
-  StructureType,
-  Union,
-  validate,
-} from '../../structure'
+  Delete,
+  DocumentClient,
+  DynamoDbSet,
+  Get,
+  Put,
+  Update,
+} from '../ddb/DocumentClient'
+import { TableConfig } from '../ddb/TableConfig'
+import { Optional, StructureType, validate } from '../../structure'
 import { generateId, randomBytes } from '../generateId'
 
 import { User } from '.'
@@ -41,7 +42,7 @@ const UserItem = {
   id: String, // user:<random>
   name: String,
   username: String,
-  gameIds: Union(Array(String), Literal(null)),
+  gameIds: Optional(Array(String)),
 
   recentGameId: Optional(String),
   recentGameEpoch: Optional(Number),
@@ -97,12 +98,21 @@ async function checkPassword(
 }
 
 export const UsersTableActions = (TableName: string) => ({
-  addGame(userId: string, gameId: string): Update {
+  addGames(userId: string, gameIds: DynamoDbSet): Update {
     return {
       TableName,
       Key: userKey(userId),
       UpdateExpression: 'ADD gameIds :i',
-      ExpressionAttributeValues: { ':i': gameId },
+      ExpressionAttributeValues: { ':i': gameIds },
+      ConditionExpression: 'attribute_exists(id)',
+    }
+  },
+  removeGames(userId: string, gameIds: DynamoDbSet): Update {
+    return {
+      TableName,
+      Key: userKey(userId),
+      UpdateExpression: 'DELETE gameIds :i',
+      ExpressionAttributeValues: { ':i': gameIds },
       ConditionExpression: 'attribute_exists(id)',
     }
   },
@@ -140,6 +150,8 @@ export const CredentialsTableActions = (TableName: string) => ({
   },
 })
 
+export interface DDBUsersService extends UsersService {}
+
 export const DDBUsersService = inject(
   { DocumentClient, TableConfig, Logger },
   ({ DocumentClient: client, TableConfig, Logger: logger }) => {
@@ -168,7 +180,7 @@ export const DDBUsersService = inject(
       }
     }
 
-    const service: UsersService = {
+    const service: DDBUsersService = {
       async authenticate(username, password) {
         try {
           const credentials = await getCredentials(username)
@@ -183,12 +195,17 @@ export const DDBUsersService = inject(
           }
           const user: UserItem | undefined = await getUser(credentials.userId)
           if (!user) {
-            logger.warn('No user found despite matching credentials', { username })
+            logger.warn(
+              {
+                username,
+              },
+              'No user found despite matching credentials',
+            )
             return
           }
           return itemToUser(user)
         } catch (e) {
-          logger.error('authenticate', e)
+          logger.error(e, 'authenticate')
           return undefined
         }
       },
@@ -252,7 +269,6 @@ export const DDBUsersService = inject(
           id: userId,
           username: credentials.username,
           name,
-          gameIds: null,
         }
 
         const ConditionExpression = 'attribute_not_exists(id)'
@@ -279,7 +295,10 @@ export const DDBUsersService = inject(
             gameIds: [],
           } as User
         } catch (e) {
-          logger.error({ newUser: { username: credentials.username } }, 'Failed to create user')
+          logger.error(
+            { newUser: { username: credentials.username } },
+            'Failed to create user',
+          )
           throw e
         }
       },
@@ -348,7 +367,7 @@ export const DDBUsersService = inject(
             })
             .promise()
         } catch (e) {
-          logger.error({ err: e, userId, username }, 'Failed to set username')
+          logger.error({ err: e, userId, username }, 'Failed to set username')
           throw e
         }
       },
