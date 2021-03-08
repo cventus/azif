@@ -19,12 +19,12 @@ export type ContentSet = StructureType<typeof ContentSet>
 
 export const GameEvent = {
   gameId: String,
-  eventId: Number,
+  clock: Number,
   playerId: String,
   epoch: EpochMs,
   action: GameAction,
 }
-type GameEvent = StructureType<typeof GameEvent>
+export type GameEvent = StructureType<typeof GameEvent>
 export const isGameEvent = validate(GameEvent)
 
 export const PlayerState = {
