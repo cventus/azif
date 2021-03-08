@@ -1,4 +1,11 @@
-import { Intersection, Literal, Optional, StructureType, Union, validate } from "../structure"
+import {
+  Intersection,
+  Literal,
+  Optional,
+  StructureType,
+  Union,
+  validate,
+} from '../structure'
 
 const CardType = Union(
   Literal('character'),
@@ -25,16 +32,10 @@ const ItemTag = Union(
 )
 export type ItemTag = StructureType<typeof ItemTag>
 
-const WeaponRange = Union(
-  Literal('melee'),
-  Literal('ranged'),
-)
+const WeaponRange = Union(Literal('melee'), Literal('ranged'))
 export type WeaponRange = StructureType<typeof WeaponRange>
 
-const Resolution = Union(
-  Literal('resolve-immediately'),
-  Literal('keep-faceup')
-)
+const Resolution = Union(Literal('resolve-immediately'), Literal('keep-faceup'))
 export type Resolution = StructureType<typeof Resolution>
 
 const DeckCard = {
@@ -58,17 +59,24 @@ const CardFace = {
 }
 export type CardFace = StructureType<typeof CardFace>
 
-const ItemCardFace = Intersection({
-  tags: Optional(Array(ItemTag)),
-  weapon: Optional(Weapon),
-}, CardFace)
+const ItemCardFace = Intersection(
+  {
+    tags: Optional(Array(ItemTag)),
+    weapon: Optional(Weapon),
+  },
+  CardFace,
+)
 export type ItemCardFace = StructureType<typeof ItemCardFace>
 
-const ItemCard = Intersection(DeckCard, {
-  id: String,
-  type: Union(Literal('common-item'), Literal('unique-item')),
-  backface: Optional(ItemCardFace)
-}, ItemCardFace)
+const ItemCard = Intersection(
+  DeckCard,
+  {
+    id: String,
+    type: Union(Literal('common-item'), Literal('unique-item')),
+    backface: Optional(ItemCardFace),
+  },
+  ItemCardFace,
+)
 export type ItemCard = StructureType<typeof ItemCard>
 
 const ConditionCard = Intersection(DeckCard, {
@@ -79,12 +87,16 @@ const ConditionCard = Intersection(DeckCard, {
 })
 export type ConditionCard = StructureType<typeof ConditionCard>
 
-const InsaneConditionCard = Intersection({
-  type: Literal('condition'),
-  condition: Literal('insane'),
-  players: Number,
-  backface: CardFace,
-}, ConditionCard, CardFace)
+const InsaneConditionCard = Intersection(
+  {
+    type: Literal('condition'),
+    condition: Literal('insane'),
+    players: Number,
+    backface: CardFace,
+  },
+  ConditionCard,
+  CardFace,
+)
 export type InsaneConditionCard = StructureType<typeof InsaneConditionCard>
 
 const SpellAction = {
@@ -93,10 +105,13 @@ const SpellAction = {
 }
 export type SpellAction = StructureType<typeof SpellAction>
 
-const SpellSideEffect = Intersection({
-  type: Literal('side-effect'),
-  gainAnother: Array(String),
-}, SpellAction)
+const SpellSideEffect = Intersection(
+  {
+    type: Literal('side-effect'),
+    gainAnother: Array(String),
+  },
+  SpellAction,
+)
 export type SpellSideEffect = StructureType<typeof SpellSideEffect>
 
 const SpellConditionalEffect = Intersection({
@@ -106,29 +121,43 @@ const SpellConditionalEffect = Intersection({
   fail: SpellAction,
   gainAnother: Array(String),
 })
-export type SpellConditionalEffect = StructureType<typeof SpellConditionalEffect>
+export type SpellConditionalEffect = StructureType<
+  typeof SpellConditionalEffect
+>
 
 const SpellEffect = Union(SpellConditionalEffect, SpellSideEffect)
 export type SpellEffect = SpellConditionalEffect | SpellSideEffect
 
-const SpellCard = Intersection(DeckCard, {
-  type: Literal('spell'),
-  groupId: String,
-  weapon: Optional(Weapon),
-  backface: SpellEffect,
-}, CardFace)
+const SpellCard = Intersection(
+  DeckCard,
+  {
+    type: Literal('spell'),
+    groupId: String,
+    weapon: Optional(Weapon),
+    backface: SpellEffect,
+  },
+  CardFace,
+)
 export type SpellCard = StructureType<typeof SpellCard>
 
-const DamageCard = Intersection(DeckCard, {
-  type: Literal('damage'),
-  resolution: Resolution,
-}, CardFace)
+const DamageCard = Intersection(
+  DeckCard,
+  {
+    type: Literal('damage'),
+    resolution: Resolution,
+  },
+  CardFace,
+)
 export type DamageCard = StructureType<typeof DamageCard>
 
-const HorrorCard = Intersection(DeckCard, {
-  type: Literal('horror'),
-  resolution: Resolution,
-}, CardFace)
+const HorrorCard = Intersection(
+  DeckCard,
+  {
+    type: Literal('horror'),
+    resolution: Resolution,
+  },
+  CardFace,
+)
 export type HorrorCard = StructureType<typeof HorrorCard>
 
 export type Ability = keyof CharacterCard['abilities']
@@ -152,11 +181,11 @@ const CharacterCard = Intersection(DeckCard, {
   specialAbility: {
     action: Optional(Array(String)),
     description: Optional(Array(String)),
-  }
+  },
 })
 export type CharacterCard = StructureType<typeof CharacterCard>
 
-const Card = Union(
+export const Card = Union(
   CharacterCard,
   ConditionCard,
   DamageCard,

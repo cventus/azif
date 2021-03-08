@@ -1,179 +1,81 @@
+import { validate, Literal, Union, StructureType } from '../structure'
 import {
-  validate,
-  Literal,
-  Union,
-  Intersection,
-  StructureType,
-} from '../structure'
+  ChatAction,
+  DiscardCardAction,
+  DrawCardAction,
+  DropCardAction,
+  FlipCardAction,
+  RemoveConditionAction,
+  SetConditionAction,
+  TradeCardAction,
+} from './actions'
 import { DieRoll } from './dice'
+import { ConnectionState, ContentSet, GameEvent, GameState } from './resources'
 
-const EpochMs = Number
-
-export type CardFacing = 'face-up' | 'face-down'
-
-const dieRoll = Union(
-  Literal('success'),
-  Literal('investigation'),
-  Literal('failure'),
-)
-export const isDieRoll: (value: unknown) => value is DieRoll = validate(dieRoll)
-
-const ChatAction = {
-  type: Literal('chat'),
-  text: String,
-}
-export type ChatAction = StructureType<typeof ChatAction>
-
-const DiceAction = {
+const DicePlayerAction = {
   type: Literal('dice'),
-  dice: Array(dieRoll),
+  roll: Array(Union(DieRoll, Literal(null))),
 }
-export type DiceAction = StructureType<typeof DiceAction>
-
-const SetConditionAction = {
-  type: Literal('set-condition'),
-  character: String,
-  condition: String,
-}
-export type SetConditionAction = StructureType<typeof SetConditionAction>
-
-const RemoveConditionAction = {
-  type: Literal('remove-condition'),
-  character: String,
-  card: String,
-}
-export type RemoveConditionAction = StructureType<typeof RemoveConditionAction>
-
-const DrawCardAction = {
-  type: Literal('draw-card'),
-  card: String,
-  character: String,
-}
-export type DrawCardAction = StructureType<typeof DrawCardAction>
-
-const Facing = Union(Literal('face-up'), Literal('face-down'))
-export type Facing = StructureType<typeof Facing>
-
-const FlipCardAction = {
-  type: Literal('card-flip'),
-  card: String,
-  facing: Facing,
-}
-export type FlipCardAction = StructureType<typeof FlipCardAction>
-
-const DropCardAction = {
-  type: Literal('drop-card'),
-  card: String,
-}
-export type DropCardAction = StructureType<typeof DropCardAction>
-
-const DiscardCardAction = {
-  type: Literal('discard-card'),
-  card: String,
-}
-export type DiscardCardAction = StructureType<typeof DiscardCardAction>
+export type DicePlayerAction = StructureType<typeof DicePlayerAction>
 
 const PlayerAction = Union(
   ChatAction,
-  DiceAction,
+  DicePlayerAction,
   DrawCardAction,
   SetConditionAction,
   RemoveConditionAction,
   FlipCardAction,
+  TradeCardAction,
   DropCardAction,
   DiscardCardAction,
 )
-
 export type PlayerAction = StructureType<typeof PlayerAction>
-export const isPlayerAction = validate(PlayerAction)
-
-const PlayerEvent = {
-  gameId: String,
-  eventId: Number,
-  playerId: String,
-  epoch: EpochMs,
-}
-type PlayerEvent = StructureType<typeof PlayerEvent>
-
-const GameEvent = Intersection(PlayerEvent, PlayerAction)
-
-export type GameEvent = StructureType<typeof GameEvent>
-export const isGameEvent = validate(GameEvent)
 
 const ResourceType = Union(
   Literal('game'),
-  Literal('profile'),
+  Literal('connection'),
   Literal('content'),
 )
 
-const Profile = {
-  id: String,
-  name: String,
-  gameIds: Array(String),
-  recentGameId: String,
-  recentGameTime: EpochMs,
+const PlayerLoginRequest = {
+  type: Literal('login'),
+  requestId: String,
+  username: String,
+  password: String,
 }
-export type Profile = StructureType<typeof Profile>
+export type PlayerLoginRequest = StructureType<typeof PlayerLoginRequest>
 
-const GameState = Union(
-  Literal('starting'),
-  Literal('on-going'),
-  Literal('over'),
-)
-
-const Player = {
-  id: String,
-  name: String,
-  characterId: String,
+const PlayerLogoutRequest = {
+  type: Literal('logout'),
+  requestId: String,
 }
+export type PlayerLogoutMessage = StructureType<typeof PlayerLogoutRequest>
 
-const CharacterInventory = {
-  characterId: String,
-  items: Array(String),
-  damages: Array(String),
-  horros: Array(String),
-  clues: Number,
-}
-
-const Game = {
-  id: String,
-  name: String,
-  state: GameState,
-  contentSets: Array(String),
-  players: Array(Player),
-  inventories: Array(CharacterInventory),
-  flippedCards: Array(String),
-}
-
-const Card = {
-
-}
-
-const Content = {
-  id: String,
-  cards: Array(Card),
-}
-
-const PlayerActionMessage = {
-  type: Literal('player-action'),
+const PlayerActionRequest = {
+  type: Literal('action'),
+  requestId: String,
   action: PlayerAction,
 }
-type PlayerActionMessage = StructureType<typeof PlayerActionMessage>
+export type PlayerActionRequest = StructureType<typeof PlayerActionRequest>
 
 const PlayerGetRequest = {
-  type: Literal('player-get-request'),
+  type: Literal('get'),
   resource: ResourceType,
   requestId: String,
   resourceId: String,
 }
-type PlayerGetRequest = StructureType<typeof PlayerActionMessage>
+export type PlayerGetRequest = StructureType<typeof PlayerGetRequest>
 
 const ClientMessage = Union(
-  PlayerActionMessage,
+  PlayerLoginRequest,
+  PlayerLogoutRequest,
+  PlayerActionRequest,
   PlayerGetRequest,
 )
 export type ClientMessage = StructureType<typeof ClientMessage>
 export const isClientMessage = validate(ClientMessage)
+
+const ClientMessageType = Union(...ClientMessage.structures.map((x) => x.type))
 
 const GameEventMessage = {
   type: Literal('server-game-event'),
@@ -181,31 +83,46 @@ const GameEventMessage = {
 }
 export type GameEventMessage = StructureType<typeof GameEventMessage>
 
+const ServerSuccessResponse = {
+  type: Literal('success'),
+  requestId: String,
+}
+export type ServerSuccessResponse = StructureType<typeof ServerSuccessResponse>
+
+const ServerFailureResponse = {
+  type: Literal('failure'),
+  requestId: String,
+  message: String,
+}
+export type ServerFailureResponse = StructureType<typeof ServerFailureResponse>
+
 const ServerGetGameResponse = {
-  type: Literal('server-get-response'),
+  type: Literal('get'),
   resource: Literal('game'),
   requestId: String,
   resourceId: String,
-  game: Game,
+  game: GameState,
 }
 
 const ServerGetProfileResponse = {
-  type: Literal('server-get-response'),
-  resource: Literal('profile'),
+  type: Literal('get'),
+  resource: Literal('connection'),
   requestId: String,
   resourceId: String,
-  profile: Profile,
+  connection: ConnectionState,
 }
 
 const ServerGetContentResponse = {
-  type: Literal('server-get-response'),
+  type: Literal('get'),
   resource: Literal('content'),
   requestId: String,
   resourceId: String,
-  content: Content,
+  content: ContentSet,
 }
 
 const ServerMessage = Union(
+  ServerSuccessResponse,
+  ServerFailureResponse,
   GameEventMessage,
   ServerGetGameResponse,
   ServerGetProfileResponse,

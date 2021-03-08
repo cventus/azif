@@ -1,4 +1,12 @@
-export type DieRoll = 'success' | 'investigation' | 'failure'
+import { Literal, StructureType, Union, validate } from '../structure'
+
+export const DieRoll = Union(
+  Literal('success'),
+  Literal('investigation'),
+  Literal('failure'),
+)
+export const isDieRoll = validate(DieRoll)
+export type DieRoll = StructureType<typeof DieRoll>
 
 const SIDES = 8
 const SUCCESSES = 3
