@@ -4,7 +4,7 @@ import http from 'http'
 import type net from 'net'
 import {
   ClientMessage,
-  GameEventMessage,
+  GameEventNotification,
   isClientMessage,
   ServerMessage,
 } from '../game/protocol'

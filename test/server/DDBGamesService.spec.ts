@@ -330,6 +330,12 @@ describe('GamesService', () => {
         expect(update3).toEqual('failure')
       })
     })
+
+    it('.tick() should increment the clock', async () => {
+      const updatedGame = await service.tick(game.id)
+
+      expect(updatedGame).toEqual({ ...game, clock: game.clock + 1 })
+    })
   })
 
   describe('when a game is ongoing', () => {
@@ -572,6 +578,12 @@ describe('GamesService', () => {
         expect(update1).toEqual('failure')
         expect(update2).toEqual('failure')
       })
+    })
+
+    it('.tick() should increment the clock', async () => {
+      const updatedGame = await service.tick(game.id)
+
+      expect(updatedGame).toEqual({ ...game, clock: game.clock + 1 })
     })
   })
 })

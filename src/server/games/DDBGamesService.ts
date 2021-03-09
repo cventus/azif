@@ -384,6 +384,19 @@ export const GameTableActions = (TableName: string) => ({
       }
     }
   },
+  tick(gameId: string): Update {
+    return {
+      TableName,
+      Key: gameKey(gameId),
+      UpdateExpression: 'SET #clock = #clock + :1',
+      ExpressionAttributeNames: expressionNames('id', 'phase', 'clock'),
+      ExpressionAttributeValues: { ':1': 1, ':over': Phases.Over },
+      ConditionExpression: and(
+        'attribute_exists(#id)',
+        '#phase <> :over',
+      )
+    }
+  },
 })
 
 export const DDBGamesService = inject(
@@ -422,6 +435,23 @@ export const DDBGamesService = inject(
             return 'failure'
           }
           logger.error({ err, gameId }, 'failed to start game')
+          throw err
+        }
+      },
+      async tick(gameId) {
+        try {
+          const { Attributes: item } = await client
+            .update({
+              ...actions.tick(gameId),
+              ReturnValues: 'ALL_NEW',
+            })
+            .promise()
+          return toGameState(item)
+        } catch (err: unknown) {
+          if (isFailedConditionalCheck(err)) {
+            return 'failure'
+          }
+          logger.error({ err, gameId }, 'failed to increment game clock')
           throw err
         }
       },

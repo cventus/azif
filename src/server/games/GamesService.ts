@@ -37,6 +37,9 @@ export interface GamesService {
   startGame(gameId: string): Promise<PartialGameState | Failure>
   endGame(gameId: string): Promise<PartialGameState | Failure>
 
+  // Increment game clock
+  tick(gameId: string):  Promise<PartialGameState | Failure>
+
   // Player management
   addPlayer(gameId: string, playerId: string): Promise<PartialGameState | Failure>
   removePlayer(gameId: string, playerId: string): Promise<PartialGameState | Failure>
