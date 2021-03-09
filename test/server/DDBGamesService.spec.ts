@@ -538,7 +538,7 @@ describe('GamesService', () => {
 
     describe('.setCardFacing()', () => {
       it('should flip cards face-down', async () => {
-        const update = await service.setCardFacing(game.id, 'my-card', 'down')
+        const update = await service.setCardFacing(game.id, 'my-card', 'face-down')
 
         expect(update).toEqual(
           expect.objectContaining({

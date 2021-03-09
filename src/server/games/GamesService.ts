@@ -1,15 +1,9 @@
 import { Facing } from '../../game/actions'
-import { GamePhase } from '../../game/resources'
+import { CharacterState, GamePhase } from '../../game/resources'
 import { inject } from '../../inject'
 
 export interface PlayerState {
   characterId?: string
-}
-
-export interface CharacterState {
-  playerId: string
-  cardIds: string[]
-  clues: number
 }
 
 export interface GameState {

@@ -4,7 +4,6 @@ import { TableConfig } from '../ddb/TableConfig'
 import { Logger } from '../logger'
 
 import {
-  CharacterState,
   GamesService,
   GameState,
   PlayerState,
@@ -25,6 +24,7 @@ import {
 } from '../ddb'
 import { generateId } from '../generateId'
 import DynamoDB from 'aws-sdk/clients/dynamodb'
+import { CharacterState } from '../../game/resources'
 
 const MaxPlayers = 5
 const DefaultClues = 3
