@@ -4,6 +4,7 @@ import { Page } from '../ddb'
 import { Credentials, User, UserCredentials } from '.'
 
 export interface UsersService {
+  get(userId: string): Promise<User | undefined>
   listUsers(token?: string): Promise<Page<User, string>>
   listCredentials(token?: string): Promise<Page<UserCredentials, string>>
   createUser(name: string, credentials: Credentials): Promise<User>

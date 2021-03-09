@@ -2,8 +2,10 @@ export interface User {
   id: string
   name: string
   gameIds: string[]
-  recentGameId?: string
-  recentGameEpoch?: number
+  recentGame?: {
+    id: string
+    timestamp: Date
+  }
 }
 
 export interface Credentials {

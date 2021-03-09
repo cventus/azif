@@ -209,6 +209,12 @@ export const DDBUsersService = inject(
           return undefined
         }
       },
+      async get(userId) {
+        const user = await getUser(userId)
+        if (user)  {
+          return itemToUser(user)
+        }
+      },
       async listUsers(token?) {
         const ExclusiveStartKey = token ? { id: token } : undefined
         const { Items: items = [], LastEvaluatedKey } = await client
