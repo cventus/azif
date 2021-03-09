@@ -1,6 +1,6 @@
 import { assemble } from '../../src/inject'
 
-import { GamesService, GameState } from '../../src/server/games/GamesService'
+import { GamesService, PartialGameState } from '../../src/server/games/GamesService'
 import { TestModule } from '../../src/server/ddb/TestClient'
 import { Logger } from '../../src/server/logger'
 
@@ -49,7 +49,7 @@ describe('GamesService', () => {
   })
 
   describe('when a game has started', () => {
-    let game: GameState
+    let game: PartialGameState
     let alice: User
     let bob: User
 
@@ -333,7 +333,7 @@ describe('GamesService', () => {
   })
 
   describe('when a game is ongoing', () => {
-    let game: GameState
+    let game: PartialGameState
     let alice: User
     let bob: User
 

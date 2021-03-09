@@ -5,8 +5,8 @@ import { Logger } from '../logger'
 
 import {
   GamesService,
-  GameState,
-  PlayerState,
+  PartialGameState,
+  PartialPlayerState,
 } from './GamesService'
 import {
   Dictionary,
@@ -59,7 +59,7 @@ const GameItem = {
 type GameItem = StructureType<typeof GameItem>
 const isGameItem = validate(GameItem)
 
-const itemToGameState = (item: GameItem): GameState => {
+const itemToGameState = (item: GameItem): PartialGameState => {
   const { cards, clues } = item
 
   const cardsByCharacter = Object.keys(cards).reduce((result, cardId) => {
@@ -80,12 +80,12 @@ const itemToGameState = (item: GameItem): GameState => {
 
   const players = Object.keys(item.players).reduce((result, playerId) => {
     const characterId = item.players[playerId]
-    const playerState: PlayerState = characterId ? { characterId } : {}
+    const playerState: PartialPlayerState = characterId ? { characterId } : {}
     return {
       ...result,
       [playerId]: playerState,
     }
-  }, {} as Record<string, PlayerState>)
+  }, {} as Record<string, PartialPlayerState>)
 
   return {
     id: item.id,
@@ -102,7 +102,7 @@ const itemToGameState = (item: GameItem): GameState => {
 
 const maybeToGameState = (
   item: DynamoDB.DocumentClient.AttributeMap | undefined,
-): GameState | undefined => {
+): PartialGameState | undefined => {
   if (isGameItem(item)) {
     return itemToGameState(item)
   }
@@ -110,7 +110,7 @@ const maybeToGameState = (
 
 const toGameState = (
   item: DynamoDB.DocumentClient.AttributeMap | undefined,
-): GameState => {
+): PartialGameState => {
   if (!isGameItem(item)) {
     throw new Error('Not a valid GameItem')
   }

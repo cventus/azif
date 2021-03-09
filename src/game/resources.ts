@@ -29,7 +29,7 @@ export const isGameEvent = validate(GameEvent)
 
 export const PlayerState = {
   name: String,
-  characterId: String,
+  characterId: Optional(String),
 }
 export type PlayerState = StructureType<typeof PlayerState>
 
