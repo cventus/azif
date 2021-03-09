@@ -1,6 +1,6 @@
+import { Facing } from '../../game/actions'
+import { GamePhase } from '../../game/resources'
 import { inject } from '../../inject'
-
-export type GameStateName = 'starting' | 'on-going' | 'over'
 
 export interface PlayerState {
   characterId?: string
@@ -16,7 +16,7 @@ export interface GameState {
   id: string
   clock: number
   name: string
-  state: GameStateName
+  phase: GamePhase
   createdAt: number
   contentSetIds: string[]
   players: Record<string, PlayerState>
@@ -24,13 +24,6 @@ export interface GameState {
   flippedCardIds: string[]
 }
 
-interface Result<T, S extends string = 'success' | 'failure'> {
-  status: S
-  message?: string
-  result: T
-}
-
-interface Success<T> extends Result<T, 'success'> {}
 type Failure = 'failure'
 
 export interface GamesService {
@@ -71,7 +64,7 @@ export interface GamesService {
   setCardFacing(
     gameId: string,
     cardId: string,
-    facing: 'up' | 'down',
+    facing: Facing,
   ): Promise<GameState | Failure>
 }
 

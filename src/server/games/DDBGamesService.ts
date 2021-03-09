@@ -7,7 +7,6 @@ import {
   CharacterState,
   GamesService,
   GameState,
-  GameStateName,
   PlayerState,
 } from './GamesService'
 import {
@@ -18,7 +17,7 @@ import {
   Union,
   validate,
 } from '../../structure'
-import { isUserItem, UsersTableActions } from '../users/DDBUsersService'
+import { UsersTableActions } from '../users/DDBUsersService'
 import {
   expressionNames,
   isFailedConditionalCheck,
@@ -26,30 +25,22 @@ import {
 } from '../ddb'
 import { generateId } from '../generateId'
 import DynamoDB from 'aws-sdk/clients/dynamodb'
-import { inspect } from 'util'
-
-class ValidationError extends Error {
-  constructor(public readonly item: unknown) {
-    super()
-  }
-}
 
 const MaxPlayers = 5
 const DefaultClues = 3
 
 const GameId = String
-const IdSet = Union(Array(String), Literal(null))
 
-const States = {
+const Phases = {
   Starting: 'starting',
-  OnGoing: 'on-going',
+  Ongoing: 'ongoing',
   Over: 'over',
 } as const
 
 const GameItem = {
   id: GameId,
   name: String,
-  state: Union(Literal('starting'), Literal('on-going'), Literal('over')),
+  phase: Union(Literal('starting'), Literal('ongoing'), Literal('over')),
   sets: {
     values: Array(String),
   },
@@ -99,7 +90,7 @@ const itemToGameState = (item: GameItem): GameState => {
   return {
     id: item.id,
     name: item.name,
-    state: item.state,
+    phase: item.phase,
     createdAt: item.createdAt,
     contentSetIds: item.sets.values,
     clock: item.clock,
@@ -136,7 +127,7 @@ export const GameTableActions = (TableName: string) => ({
       Item: {
         id: gameId,
         name,
-        state: States.Starting,
+        phase: Phases.Starting,
         sets,
         clock: 0,
         createdAt: new Date().valueOf(),
@@ -151,24 +142,24 @@ export const GameTableActions = (TableName: string) => ({
     return {
       TableName,
       Key: gameKey(gameId),
-      UpdateExpression: 'SET #state = :ongoing ADD #clock :1',
-      ExpressionAttributeNames: expressionNames('id', 'state', 'clock'),
+      UpdateExpression: 'SET #phase = :ongoing ADD #clock :1',
+      ExpressionAttributeNames: expressionNames('id', 'phase', 'clock'),
       ExpressionAttributeValues: {
         ':1': 1,
-        ':starting': States.Starting,
-        ':ongoing': States.OnGoing,
+        ':starting': Phases.Starting,
+        ':ongoing': Phases.Ongoing,
       },
-      ConditionExpression: and('attribute_exists(#id)', '#state = :starting'),
+      ConditionExpression: and('attribute_exists(#id)', '#phase = :starting'),
     }
   },
   endGame(gameId: string): Update {
     return {
       TableName,
       Key: gameKey(gameId),
-      UpdateExpression: 'SET #state = :over ADD #clock :1',
-      ExpressionAttributeNames: expressionNames('id', 'state', 'clock'),
-      ExpressionAttributeValues: { ':1': 1, ':over': 'over' },
-      ConditionExpression: and('attribute_exists(#id)', '#state <> :over'),
+      UpdateExpression: 'SET #phase = :over ADD #clock :1',
+      ExpressionAttributeNames: expressionNames('id', 'phase', 'clock'),
+      ExpressionAttributeValues: { ':1': 1, ':over': Phases.Over },
+      ConditionExpression: and('attribute_exists(#id)', '#phase <> :over'),
     }
   },
   addCard(gameId: string, characterId: string, cardId: string): Update {
@@ -178,17 +169,17 @@ export const GameTableActions = (TableName: string) => ({
       UpdateExpression: 'SET #cards.#card = :char ADD #clock :1',
       ExpressionAttributeNames: {
         '#card': cardId,
-        ...expressionNames('id', 'state', 'cards', 'clock'),
+        ...expressionNames('id', 'phase', 'cards', 'clock'),
       },
       ExpressionAttributeValues: {
         ':char': characterId,
-        ':ongoing': 'on-going',
+        ':ongoing': Phases.Ongoing,
         ':1': 1,
       },
       ConditionExpression: and(
         'attribute_exists(#id)',
         'attribute_not_exists(#cards.#card)',
-        '#state = :ongoing',
+        '#phase = :ongoing',
       ),
     }
   },
@@ -204,17 +195,17 @@ export const GameTableActions = (TableName: string) => ({
       UpdateExpression: 'SET #cards.#card = :to ADD #clock :1',
       ExpressionAttributeNames: {
         '#card': cardId,
-        ...expressionNames('id', 'state', 'cards', 'clock'),
+        ...expressionNames('id', 'phase', 'cards', 'clock'),
       },
       ExpressionAttributeValues: {
         ':to': toCharacterId,
         ':from': fromCharacterId,
-        ':ongoing': 'on-going',
+        ':ongoing': Phases.Ongoing,
         ':1': 1,
       },
       ConditionExpression: and(
         'attribute_exists(#id)',
-        '#state = :ongoing',
+        '#phase = :ongoing',
         'attribute_exists(#cards.#card)',
         '#cards.#card = :from',
       ),
@@ -227,13 +218,13 @@ export const GameTableActions = (TableName: string) => ({
       UpdateExpression: 'REMOVE #cards.#card ADD #clock :1',
       ExpressionAttributeNames: {
         '#card': cardId,
-        ...expressionNames('id', 'state', 'cards', 'clock'),
+        ...expressionNames('id', 'phase', 'cards', 'clock'),
       },
-      ExpressionAttributeValues: { ':ongoing': 'on-going', ':1': 1 },
+      ExpressionAttributeValues: { ':ongoing': Phases.Ongoing, ':1': 1 },
       ConditionExpression: and(
         'attribute_exists(#id)',
         'attribute_exists(#cards.#card)',
-        '#state = :ongoing',
+        '#phase = :ongoing',
       ),
     }
   },
@@ -253,18 +244,18 @@ export const GameTableActions = (TableName: string) => ({
       ExpressionAttributeNames: expressionNames(
         'id',
         'flips',
-        'state',
+        'phase',
         'clock',
       ),
       ExpressionAttributeValues: {
         ':c': cardIdSet,
         ':cid': cardId,
-        ':ongoing': 'on-going',
+        ':ongoing': Phases.Ongoing,
         ':1': 1,
       },
       ConditionExpression: and(
         'attribute_exists(#id)',
-        '#state = :ongoing',
+        '#phase = :ongoing',
         `${action === 'add' ? 'NOT ' : ''} contains(#flips, :cid)`,
       ),
     }
@@ -279,14 +270,14 @@ export const GameTableActions = (TableName: string) => ({
       UpdateExpression: 'SET #clues.#c = #clues.#c + :c ADD #clock :1',
       ExpressionAttributeNames: {
         '#c': characterId,
-        ...expressionNames('id', 'clues', 'state', 'clock'),
+        ...expressionNames('id', 'clues', 'phase', 'clock'),
       },
       ExpressionAttributeValues: {
         ':c': delta,
-        ':ongoing': 'on-going',
+        ':ongoing': Phases.Ongoing,
         ':1': 1,
       },
-      ConditionExpression: and('attribute_exists(#id)', '#state = :ongoing'),
+      ConditionExpression: and('attribute_exists(#id)', '#phase = :ongoing'),
     }
   },
   addPlayer(gameId: string, userId: string, clock: number): Update {
@@ -296,18 +287,18 @@ export const GameTableActions = (TableName: string) => ({
       UpdateExpression: 'SET #players.#p = :p, #clock = :clock',
       ExpressionAttributeNames: {
         '#p': userId,
-        ...expressionNames('id', 'players', 'state', 'clock'),
+        ...expressionNames('id', 'players', 'phase', 'clock'),
       },
       ExpressionAttributeValues: {
         ':p': null,
         ':clock': clock + 1,
         ':oldclock': clock,
         ':max': MaxPlayers,
-        ':over': 'over',
+        ':over': Phases.Over,
       },
       ConditionExpression: and(
         'attribute_exists(#id)',
-        '#state <> :over',
+        '#phase <> :over',
         'size(#players) < :max',
         '#clock = :oldclock',
         'attribute_not_exists(#players.#p)',
@@ -349,18 +340,18 @@ export const GameTableActions = (TableName: string) => ({
           '#p': userId,
           '#from': previousCharacterId,
           '#to': characterId,
-          ...expressionNames('id', 'clock', 'players', 'clues', 'state'),
+          ...expressionNames('id', 'clock', 'players', 'clues', 'phase'),
         },
         ExpressionAttributeValues: {
           ':c': DefaultClues,
           ':from': previousCharacterId,
           ':to': characterId,
-          ':s': 'starting',
+          ':starting': Phases.Starting,
           ':1': 1,
         },
         ConditionExpression: and(
           'attribute_exists(#id)',
-          '#state = :s', // The game hasn't started yet
+          '#phase = :starting', // The game hasn't started yet
           '#players.#p = :from', // We're switching away from the right character
           'attribute_exists(#players.#p)', // The player is part of the game
           'attribute_not_exists(#clues.#to)', // The character hasn't been chosen yet
@@ -376,17 +367,17 @@ export const GameTableActions = (TableName: string) => ({
         ExpressionAttributeNames: {
           '#p': userId,
           '#to': characterId,
-          ...expressionNames('id', 'clock', 'players', 'clues', 'state'),
+          ...expressionNames('id', 'clock', 'players', 'clues', 'phase'),
         },
         ExpressionAttributeValues: {
           ':c': DefaultClues,
           ':to': characterId,
-          ':s': 'starting',
+          ':starting': Phases.Starting,
           ':1': 1,
         },
         ConditionExpression: and(
           'attribute_exists(#id)',
-          '#state = :s', // The game hasn't started yet
+          '#phase = :starting', // The game hasn't started yet
           'attribute_exists(#players.#p)', // The player is part of the game
           'attribute_not_exists(#clues.#to)', // The character hasn't been chosen by somebody else yet
         ),
@@ -657,7 +648,7 @@ export const DDBGamesService = inject(
       },
       async setCardFacing(gameId, cardId, facing) {
         try {
-          const action = facing === 'up' ? 'remove' : 'add'
+          const action = facing === 'face-up' ? 'remove' : 'add'
           const { Attributes: item } = await client
             .update({
               ...actions.updateFlippedCardIds(

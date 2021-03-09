@@ -25,6 +25,7 @@ describe('GamesService', () => {
     cleanup = () => assembly.destroy()
   })
 
+
   afterEach(() => cleanup())
 
   it('.createGame() should create new games', async () => {
@@ -38,7 +39,7 @@ describe('GamesService', () => {
       expect.objectContaining({
         clock: 0,
         name: 'My new game',
-        state: 'starting',
+        phase: 'starting',
         characters: {},
         contentSetIds: expect.arrayContaining(['alpha', 'beta', 'gamma']),
         flippedCardIds: [],
@@ -64,24 +65,24 @@ describe('GamesService', () => {
       })
     })
 
-    it('.startGame() should move the game into the "on-going" state', async () => {
+    it('.startGame() should move the game into the "ongoing" phase', async () => {
       const updatedGame = await service.startGame(game.id)
 
       expect(updatedGame).toEqual(
         expect.objectContaining({
           clock: 1,
-          state: 'on-going',
+          phase: 'ongoing',
         }),
       )
     })
 
-    it('.endGame() should move the game into the "over" state', async () => {
+    it('.endGame() should move the game into the "over" phase', async () => {
       const endedGame = await service.endGame(game.id)
 
       expect(endedGame).toEqual(
         expect.objectContaining({
           clock: 1,
-          state: 'over',
+          phase: 'over',
         }),
       )
     })
@@ -331,7 +332,7 @@ describe('GamesService', () => {
     })
   })
 
-  describe('when a game is on-going', () => {
+  describe('when a game is ongoing', () => {
     let game: GameState
     let alice: User
     let bob: User
@@ -548,8 +549,8 @@ describe('GamesService', () => {
       })
 
       it('should flip down-facing cards up', async () => {
-        await service.setCardFacing(game.id, 'my-card', 'down')
-        const update = await service.setCardFacing(game.id, 'my-card', 'up')
+        await service.setCardFacing(game.id, 'my-card', 'face-down')
+        const update = await service.setCardFacing(game.id, 'my-card', 'face-up')
 
         expect(update).toEqual(
           expect.objectContaining({
@@ -559,13 +560,13 @@ describe('GamesService', () => {
         )
       })
 
-      it('should fail if a card is not in the opposite state', async () => {
-        await service.setCardFacing(game.id, 'my-card', 'down')
-        const update1 = await service.setCardFacing(game.id, 'my-card', 'down')
+      it('should fail if a card is not in the opposite phase', async () => {
+        await service.setCardFacing(game.id, 'my-card', 'face-down')
+        const update1 = await service.setCardFacing(game.id, 'my-card', 'face-down')
         const update2 = await service.setCardFacing(
           game.id,
           'my-other-card',
-          'up',
+          'face-up',
         )
 
         expect(update1).toEqual('failure')

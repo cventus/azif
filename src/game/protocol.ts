@@ -75,13 +75,12 @@ const ClientMessage = Union(
 export type ClientMessage = StructureType<typeof ClientMessage>
 export const isClientMessage = validate(ClientMessage)
 
-const ClientMessageType = Union(...ClientMessage.structures.map((x) => x.type))
-
-const GameEventMessage = {
-  type: Literal('server-game-event'),
+export const ServerGameNotification = {
+  type: Literal('game-event'),
   event: GameEvent,
+  game: GameState,
 }
-export type GameEventMessage = StructureType<typeof GameEventMessage>
+export type ServerGameNotification = StructureType<typeof ServerGameNotification>
 
 const ServerSuccessResponse = {
   type: Literal('success'),
@@ -123,7 +122,7 @@ const ServerGetContentResponse = {
 const ServerMessage = Union(
   ServerSuccessResponse,
   ServerFailureResponse,
-  GameEventMessage,
+  ServerGameNotification,
   ServerGetGameResponse,
   ServerGetProfileResponse,
   ServerGetContentResponse,

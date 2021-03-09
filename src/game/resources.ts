@@ -39,11 +39,11 @@ export const CharacterState = {
 }
 export type CharacterState = StructureType<typeof CharacterState>
 
-export const GamePhase = Union([
+export const GamePhase = Union(
   Literal('starting'),
   Literal('ongoing'),
   Literal('over'),
-])
+)
 export type GamePhase = StructureType<typeof GamePhase>
 
 export const GameState = {
