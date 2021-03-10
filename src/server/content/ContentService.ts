@@ -1,16 +1,11 @@
-import { Card } from '../../game/rules'
+import { ContentSet } from '../../game/resources'
 import { inject } from '../../inject'
 
-export interface ContentSet {
-  id: string
-  name: string
-  description: string
-  cards: Card[]
-}
+export type ContentSetPreview = Omit<ContentSet, 'cards'>
 
 export interface ContentService {
-  getSet(setId: string): Promise<ContentSet | undefined>
-  listSets(setId: string): Promise<Omit<ContentSet, 'cards'>[] | undefined>
+  get(setId: string): Promise<ContentSet | undefined>
+  list(): Promise<ContentSetPreview[]>
 }
 
 export const ContentService = inject<ContentService>()
