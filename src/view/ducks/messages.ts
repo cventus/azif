@@ -1,7 +1,7 @@
 import { defineActions } from './lib'
 import { Action } from './actions'
 import { Reducer } from 'redux'
-import { GameEvent } from '../../game/protocol'
+import { GameEvent } from '../../game/resources'
 
 export const messages = defineActions('messages', {})
 
@@ -22,7 +22,7 @@ const reducer: Reducer<MessageState, Action> = (
   switch (action.type) {
     case 'connection/serverMessage': {
       const serverMessage = action.message
-      if (serverMessage.type === 'server-game-event') {
+      if (serverMessage.type === 'game-event') {
         const gameEvent: DatedMessage = {
           ...serverMessage.event,
           date: new Date(serverMessage.event.epoch),
