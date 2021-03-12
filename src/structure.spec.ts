@@ -141,12 +141,14 @@ describe('validate', () => {
   it('should validate objects with optional fields', () => {
     const isObject = validate({
       type: Literal('type'),
+      name: Optional(String),
       payload: Optional(Tuple(Number, Boolean)),
     })
 
     expect(isObject({ type: 'type', payload: [42, false] })).toBe(true)
     expect(isObject({ type: 'type', payload: undefined })).toBe(true)
     expect(isObject({ type: 'type' })).toBe(true)
+    expect(isObject({ type: 'type', name: 'John' })).toBe(true)
 
     expect(isObject({ type: 'type', payload: 'hello' })).toBe(false)
   })

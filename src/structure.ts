@@ -242,7 +242,7 @@ function validateObject<T>(
       } else {
         predicate = validate(value)
       }
-      return [key, validate(value)] as [string, Predicate]
+      return [key, predicate] as [string, Predicate]
     },
   )
 
@@ -254,13 +254,16 @@ function validateObject<T>(
       return false
     }
     for (const [key, predicate] of predicates) {
-      if (!hasField(value, key)) {
-        return optionalFields.has(key)
-      }
-      if (value[key] === undefined) {
-        return optionalFields.has(key)
-      }
-      if (!predicate(value[key])) {
+      if (hasField(value, key)) {
+        if (value[key] === undefined) {
+          if (optionalFields.has(key)) {
+            continue
+          }
+        }
+        if (!predicate(value[key])) {
+          return false
+        }
+      } else if (!optionalFields.has(key)) {
         return false
       }
     }
