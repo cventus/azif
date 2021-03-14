@@ -87,7 +87,7 @@ export const TestTableConfig = inject<TableConfig>({
     games: 'items',
     users: 'items',
     connections: 'items',
-    gameConnections: 'game-connections'
+    gameConnections: 'game-connections',
   },
 })
 

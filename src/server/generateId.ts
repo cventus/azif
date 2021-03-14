@@ -9,4 +9,3 @@ export const generateId = async (): Promise<string> => {
   const buf = await randomBytes(7) // 7 bytes = 56 bits
   return encodeBase32(buf).substr(0, 10)
 }
-

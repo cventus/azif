@@ -11,4 +11,3 @@ export interface TableConfig {
 }
 
 export const TableConfig = inject<TableConfig>()
-

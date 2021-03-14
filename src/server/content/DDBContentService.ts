@@ -24,7 +24,7 @@ export const DDBContentService = inject(
       async get(setId) {
         // Sets are stored as meta-information and deflated JSON, containing an
         // array of Cards.
-        const Key = { type: 'set', id: setId  }
+        const Key = { type: 'set', id: setId }
         const { Item } = await client.get({ TableName, Key }).promise()
         if (!Item) {
           return undefined
@@ -64,7 +64,7 @@ export const DDBContentService = inject(
       async list() {
         // TODO
         const { Items } = await client.scan({ TableName }).promise()
-        
+
         return []
       },
     }

@@ -8,7 +8,10 @@ export interface SocketSession {
 }
 
 export interface SessionsService {
-  createSession(sessionId: string, userId: string): Promise<SocketSession | undefined>
+  createSession(
+    sessionId: string,
+    userId: string,
+  ): Promise<SocketSession | undefined>
   getSession(sessionId: string): Promise<SocketSession | undefined>
   subscribeToGame(sessionId: string, gameId: string): Promise<void>
   destroySession(sessionId: string): Promise<void>

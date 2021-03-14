@@ -4,28 +4,31 @@ import { inject } from '../../inject'
 import { User } from '../users'
 
 export type PartialPlayerState = Omit<PlayerState, 'name'>
-export type PartialGameState =
-  & Omit<GameState, 'players'>
-  & { players: Record<string, PartialPlayerState> }
+export type PartialGameState = Omit<GameState, 'players'> & {
+  players: Record<string, PartialPlayerState>
+}
 
 export function makeGameState(
   partialState: PartialGameState,
   users: User[],
 ): GameState {
-  const players = Object.entries(partialState.players).reduce((acc, [playerId, partialPlayer]) => {
-    const player: PlayerState = {
-      ...partialPlayer,
-      name: users.find(({ id }) => id === playerId)?.name || '',
-    }
-    return {
-      ...acc,
-      [playerId]: player,
-    }
-  }, {} as Record<string, PlayerState>)
+  const players = Object.entries(partialState.players).reduce(
+    (acc, [playerId, partialPlayer]) => {
+      const player: PlayerState = {
+        ...partialPlayer,
+        name: users.find(({ id }) => id === playerId)?.name || '',
+      }
+      return {
+        ...acc,
+        [playerId]: player,
+      }
+    },
+    {} as Record<string, PlayerState>,
+  )
 
   return {
     ...partialState,
-    players
+    players,
   }
 }
 
@@ -38,11 +41,17 @@ export interface GamesService {
   endGame(gameId: string): Promise<PartialGameState | Failure>
 
   // Increment game clock
-  tick(gameId: string):  Promise<PartialGameState | Failure>
+  tick(gameId: string): Promise<PartialGameState | Failure>
 
   // Player management
-  addPlayer(gameId: string, playerId: string): Promise<PartialGameState | Failure>
-  removePlayer(gameId: string, playerId: string): Promise<PartialGameState | Failure>
+  addPlayer(
+    gameId: string,
+    playerId: string,
+  ): Promise<PartialGameState | Failure>
+  removePlayer(
+    gameId: string,
+    playerId: string,
+  ): Promise<PartialGameState | Failure>
 
   switchCharacter(
     gameId: string,
@@ -68,7 +77,10 @@ export interface GamesService {
     toCharacterId: string,
     cardId: string,
   ): Promise<PartialGameState | Failure>
-  removeCard(gameId: string, cardId: string): Promise<PartialGameState | Failure>
+  removeCard(
+    gameId: string,
+    cardId: string,
+  ): Promise<PartialGameState | Failure>
   setCardFacing(
     gameId: string,
     cardId: string,

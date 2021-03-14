@@ -5,7 +5,6 @@ import { GameHandler } from './handler/GameHandler'
 const GameServer = inject(
   { SocketServer, GameHandler },
   ({ SocketServer: server, GameHandler: handler }) => {
-
     const onConnect = (socketId: string) => {
       handler({ type: 'connect', socketId })
     }
@@ -27,7 +26,7 @@ const GameServer = inject(
     }
     return cleanup
   },
-  (cleanup) => cleanup()
+  (cleanup) => cleanup(),
 )
 
 export default GameServer

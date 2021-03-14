@@ -62,7 +62,7 @@ describe('DDBConnectionsService', () => {
       })
     })
 
-    it('should throw an exception if the socket isn\'t tied to a user', async () => {
+    it("should throw an exception if the socket isn't tied to a user", async () => {
       await expect(service.setGame('S_1', 'game:1')).rejects.toThrow()
     })
 
@@ -76,19 +76,19 @@ describe('DDBConnectionsService', () => {
       const connections = await service.getGameConnections('game:1')
 
       expect(connections).toEqual(
-        expect.arrayContaining([{
-          socketId: 'S_1',
-          userId: 'user:1',
-          gameId: 'game:1',
-        },
-        {
-          socketId: 'S_2',
-          userId: 'user:2',
-          gameId: 'game:1',
-        }
-      ])
+        expect.arrayContaining([
+          {
+            socketId: 'S_1',
+            userId: 'user:1',
+            gameId: 'game:1',
+          },
+          {
+            socketId: 'S_2',
+            userId: 'user:2',
+            gameId: 'game:1',
+          },
+        ]),
       )
-
     })
 
     it('should associate another game with a socket', async () => {
@@ -101,11 +101,13 @@ describe('DDBConnectionsService', () => {
       const game2 = await service.getGameConnections('game:2')
 
       expect(game1).toEqual([])
-      expect(game2).toEqual([{
-        socketId: 'S_1',
-        userId: 'user:1',
-        gameId: 'game:2',
-      }])
+      expect(game2).toEqual([
+        {
+          socketId: 'S_1',
+          userId: 'user:1',
+          gameId: 'game:2',
+        },
+      ])
       expect(connection).toEqual({
         socketId: 'S_1',
         userId: 'user:1',
@@ -123,7 +125,7 @@ describe('DDBConnectionsService', () => {
       expect(connection).toBe(undefined)
     })
 
-    it('should silently fail if the connection doesn\'t exist', async () => {
+    it("should silently fail if the connection doesn't exist", async () => {
       await expect(service.removeConnection('S_1')).resolves.toBe(undefined)
     })
 
@@ -142,7 +144,9 @@ describe('DDBConnectionsService', () => {
       await service.setGame('S_1', 'game:1')
 
       // connection row got deleted while game connection remained somehow
-      await client.delete({ Key: { id: 'socket:S_1' }, TableName: table }).promise()
+      await client
+        .delete({ Key: { id: 'socket:S_1' }, TableName: table })
+        .promise()
 
       // delete with game ID specified
       await service.removeConnection('S_1', 'game:1')
