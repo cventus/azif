@@ -5,6 +5,8 @@ export interface TableConfig {
     content: string
     games: string
     users: string
+    connections: string
+    gameConnections: string
   }
 }
 

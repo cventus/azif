@@ -52,6 +52,33 @@ const TestTables: DynamoDB.CreateTableInput[] = [
       WriteCapacityUnits: 1,
     },
   },
+  {
+    TableName: 'game-connections',
+    KeySchema: [
+      {
+        AttributeName: 'gameId',
+        KeyType: 'HASH',
+      },
+      {
+        AttributeName: 'socketId',
+        KeyType: 'RANGE',
+      },
+    ],
+    AttributeDefinitions: [
+      {
+        AttributeName: 'gameId',
+        AttributeType: 'S',
+      },
+      {
+        AttributeName: 'socketId',
+        AttributeType: 'S',
+      },
+    ],
+    ProvisionedThroughput: {
+      ReadCapacityUnits: 1,
+      WriteCapacityUnits: 1,
+    },
+  },
 ]
 
 export const TestTableConfig = inject<TableConfig>({
@@ -59,6 +86,8 @@ export const TestTableConfig = inject<TableConfig>({
     content: 'items',
     games: 'items',
     users: 'items',
+    connections: 'items',
+    gameConnections: 'game-connections'
   },
 })
 
