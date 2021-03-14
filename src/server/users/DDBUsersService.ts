@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 import { promisify } from 'util'
 
-import { Logger } from '../logger'
+import { LoggerService } from '../logger/LoggerService'
 import { inject } from '../../inject'
 import {
   Delete,
@@ -153,9 +153,10 @@ export const CredentialsTableActions = (TableName: string) => ({
 export interface DDBUsersService extends UsersService {}
 
 export const DDBUsersService = inject(
-  { DocumentClient, TableConfig, Logger },
-  ({ DocumentClient: client, TableConfig, Logger: logger }) => {
+  { DocumentClient, TableConfig, LoggerService },
+  ({ DocumentClient: client, TableConfig, LoggerService }) => {
     const TableName = TableConfig.tables.users
+    const logger = LoggerService.create('DDBUsersService')
 
     async function getCredentials(
       username: string,
@@ -180,7 +181,7 @@ export const DDBUsersService = inject(
       }
     }
 
-    const service: DDBUsersService = {
+    const service: DDBUsersService = LoggerService.traceMethods(logger, {
       async authenticate(username, password) {
         try {
           const credentials = await getCredentials(username)
@@ -211,7 +212,7 @@ export const DDBUsersService = inject(
       },
       async get(userId) {
         const user = await getUser(userId)
-        if (user)  {
+        if (user) {
           return itemToUser(user)
         }
       },
@@ -407,7 +408,7 @@ export const DDBUsersService = inject(
             .promise()
         }
       },
-    }
+    })
 
     return service
   },

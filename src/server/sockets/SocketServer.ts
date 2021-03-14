@@ -2,7 +2,7 @@ import { EventEmitter } from 'events'
 import WebSocket from 'ws'
 
 import { inject } from '../../inject'
-import { Logger } from '../logger'
+import { LoggerService } from '../logger/LoggerService'
 
 export interface SocketServerConfig {
   path: string
@@ -11,7 +11,7 @@ export interface SocketServerConfig {
 
 export const SocketServerConfig = inject<SocketServerConfig>()
 
-interface SocketServer extends EventEmitter {
+interface SocketServer {
   close(): Promise<void>
 
   send(socketId: string, json: unknown): Promise<void>
@@ -27,43 +27,47 @@ interface SocketServer extends EventEmitter {
 }
 
 export const SocketServer = inject(
-  { SocketServerConfig, Logger },
-  ({ SocketServerConfig: config, Logger: logger }) => {
+  { SocketServerConfig, Logger: LoggerService },
+  ({ SocketServerConfig: config, Logger }): SocketServer => {
     const server = new WebSocket.Server(config)
+    const logger = Logger.create('SocketServer')
 
     let counter = 0
     const makeId = () => `connection-${counter++}`
     const connections: Record<string, WebSocket> = {}
 
-    const service = new (class extends EventEmitter implements SocketServer {
-      send(socketId: string, json: unknown): Promise<void> {
-        return new Promise((resolve, reject) => {
-          connections[socketId].send(JSON.stringify(json), (err) => {
-            if (err) {
-              reject(err)
-            } else {
-              resolve()
-            }
+    const service = Logger.traceMethods(
+      logger,
+      new (class extends EventEmitter implements SocketServer {
+        send(socketId: string, json: unknown): Promise<void> {
+          return new Promise((resolve, reject) => {
+            connections[socketId].send(JSON.stringify(json), (err) => {
+              if (err) {
+                reject(err)
+              } else {
+                resolve()
+              }
+            })
           })
-        })
-      }
+        }
 
-      disconnect(socketId: string): Promise<void> {
-        return Promise.resolve(connections[socketId].close())
-      }
+        disconnect(socketId: string): Promise<void> {
+          return Promise.resolve(connections[socketId].close())
+        }
 
-      close(): Promise<void> {
-        return new Promise((resolve, reject) => {
-          server.close((err) => {
-            if (err) {
-              reject(err)
-            } else {
-              resolve()
-            }
+        close(): Promise<void> {
+          return new Promise((resolve, reject) => {
+            server.close((err) => {
+              if (err) {
+                reject(err)
+              } else {
+                resolve()
+              }
+            })
           })
-        })
-      }
-    })()
+        }
+      })(),
+    )
 
     server.on('connection', (ws) => {
       const socketId = makeId()

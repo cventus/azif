@@ -10,7 +10,7 @@ import { validate } from '../../structure'
 import { ConnectionsService } from '../connections/ConnectionsService'
 import { GameActionsHandler } from '../games/GameActionsHandler'
 import { makeGameState } from '../games/GamesService'
-import { Logger } from '../logger'
+import { LoggerService } from '../logger/LoggerService'
 import { SocketsService } from '../sockets/SocketsService'
 import { User } from '../users'
 import { UsersService } from '../users/UsersService'
@@ -42,19 +42,21 @@ const hasRequestId = validate({ requestId: String })
 
 export const GameHandler = inject(
   {
-    Logger,
+    LoggerService,
     ConnectionsService,
     UsersService,
     SocketsService,
     GameActionsHandler,
   },
   ({
-    Logger: logger,
+    LoggerService,
     ConnectionsService: connections,
     UsersService: users,
     SocketsService: sockets,
     GameActionsHandler: game,
   }): GameHandler => {
+    const logger = LoggerService.create('GameHandler')
+
     const send = async (socketId: string, response: ServerMessage) => {
       await sockets.send(socketId, response)
     }
@@ -82,7 +84,7 @@ export const GameHandler = inject(
       await Promise.all(socketIds.map((socketId) => send(socketId, event)))
     }
 
-    return async (event) => {
+    return LoggerService.traceFunction<GameHandler>(logger, async (event) => {
       const { socketId } = event
       switch (event.type) {
         case 'connect':
@@ -189,6 +191,6 @@ export const GameHandler = inject(
           }
           break
       }
-    }
+    })
   },
 )

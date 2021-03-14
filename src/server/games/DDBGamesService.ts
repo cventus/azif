@@ -1,7 +1,7 @@
 import { inject } from '../../inject'
 import { DocumentClient, DynamoDbSet, Put, Update } from '../ddb/DocumentClient'
 import { TableConfig } from '../ddb/TableConfig'
-import { Logger } from '../logger'
+import { LoggerService } from '../logger/LoggerService'
 
 import {
   GamesService,
@@ -391,22 +391,20 @@ export const GameTableActions = (TableName: string) => ({
       UpdateExpression: 'SET #clock = #clock + :1',
       ExpressionAttributeNames: expressionNames('id', 'phase', 'clock'),
       ExpressionAttributeValues: { ':1': 1, ':over': Phases.Over },
-      ConditionExpression: and(
-        'attribute_exists(#id)',
-        '#phase <> :over',
-      )
+      ConditionExpression: and('attribute_exists(#id)', '#phase <> :over'),
     }
   },
 })
 
 export const DDBGamesService = inject(
-  { DocumentClient, TableConfig, Logger },
-  ({ DocumentClient: client, TableConfig, Logger: logger }) => {
+  { DocumentClient, TableConfig, LoggerService },
+  ({ DocumentClient: client, TableConfig, LoggerService }) => {
     const actions = GameTableActions(TableConfig.tables.games)
     const userActions = UsersTableActions(TableConfig.tables.users)
+    const logger = LoggerService.create('DDBGamesService')
 
-    const service: GamesService = {
-      async createGame(name: string, contentSetIds: string[]) {
+    const service: GamesService = LoggerService.traceMethods(logger, {
+      async createGame(name, contentSetIds) {
         try {
           const id = `game:${await generateId()}`
           const action = actions.createGame(
@@ -528,7 +526,6 @@ export const DDBGamesService = inject(
             } else if (isFailedConditionalCheck(err)) {
               // Did we only get the clock wrong?
               throw err
-              break
             } else {
               throw err
             }
@@ -698,7 +695,7 @@ export const DDBGamesService = inject(
           return 'failure'
         }
       },
-    }
+    })
 
     return service
   },
