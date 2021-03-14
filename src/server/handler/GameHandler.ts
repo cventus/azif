@@ -93,7 +93,7 @@ export const GameHandler = inject(
 
         case 'disconnect':
           logger.info({ socketId }, 'player disconnected')
-          await connections.disconnect(socketId)
+          await connections.removeConnection(socketId)
           break
 
         case 'message':
@@ -136,7 +136,7 @@ export const GameHandler = inject(
             }
 
             // Associate socket with user
-            await connections.setUser(socketId, user.id)
+            await connections.createConnection(socketId, user.id)
             await sendOk(socketId, message)
           } else {
             // User is authenticated
@@ -147,7 +147,7 @@ export const GameHandler = inject(
                 break
 
               case 'logout':
-                await connections.disconnect(socketId)
+                await connections.removeConnection(socketId)
                 await sendOk(socketId, message)
                 break
 
