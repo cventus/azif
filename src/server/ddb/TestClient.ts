@@ -1,16 +1,18 @@
 import DynamoDB from 'aws-sdk/clients/dynamodb'
 
 import { inject } from '../../inject'
+import { generateId } from '../generateId'
 import { TableConfig } from './TableConfig'
 
-export const TestDynamoDB = inject({}, () => {
+export const TestDynamoDB = inject({}, async () => {
+  const testId = await generateId()
   const client = new DynamoDB({
     apiVersion: '2012-08-10',
     endpoint: 'http://localhost:8000',
     region: 'ddblocal',
     credentials: {
       // local dynamodb accepts any access key
-      accessKeyId: `test-${Math.floor(Math.random() * 10000)}`,
+      accessKeyId: `test-${testId}`,
       secretAccessKey: 'test',
     },
   })
