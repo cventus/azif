@@ -3,10 +3,11 @@ import { inject } from '../../inject'
 export interface TableConfig {
   tables: {
     content: string
+    events: string
     games: string
-    users: string
-    sessions: string
     gameSessions: string
+    sessions: string
+    users: string
   }
 }
 

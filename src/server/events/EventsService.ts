@@ -7,7 +7,7 @@ interface ListEventsOptions {
 }
 
 export interface EventsService {
-  get(gameId: string, clock: number): Promise<GameEvent>
+  get(gameId: string, clock: number): Promise<GameEvent | undefined>
   write(event: GameEvent): Promise<GameEvent>
   list(gameId: string, options?: ListEventsOptions): Promise<GameEvent[]>
 }

@@ -34,6 +34,33 @@ export const TestDocumentClient = inject(
 
 const TestTables: DynamoDB.CreateTableInput[] = [
   {
+    TableName: 'events',
+    KeySchema: [
+      {
+        AttributeName: 'gameId',
+        KeyType: 'HASH',
+      },
+      {
+        AttributeName: 'clock',
+        KeyType: 'RANGE',
+      },
+    ],
+    AttributeDefinitions: [
+      {
+        AttributeName: 'gameId',
+        AttributeType: 'S',
+      },
+      {
+        AttributeName: 'clock',
+        AttributeType: 'N',
+      },
+    ],
+    ProvisionedThroughput: {
+      ReadCapacityUnits: 1,
+      WriteCapacityUnits: 1,
+    },
+  },
+  {
     TableName: 'items',
     KeySchema: [
       {
@@ -53,7 +80,7 @@ const TestTables: DynamoDB.CreateTableInput[] = [
     },
   },
   {
-    TableName: 'game-sessions',
+    TableName: 'sessions',
     KeySchema: [
       {
         AttributeName: 'gameId',
@@ -84,10 +111,11 @@ const TestTables: DynamoDB.CreateTableInput[] = [
 export const TestTableConfig = inject<TableConfig>({
   tables: {
     content: 'items',
+    events: 'events',
     games: 'items',
-    users: 'items',
+    gameSessions: 'sessions',
     sessions: 'items',
-    gameSessions: 'game-sessions',
+    users: 'items',
   },
 })
 
