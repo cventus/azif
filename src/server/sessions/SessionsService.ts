@@ -1,20 +1,17 @@
 import { inject } from '../../inject'
-import { User } from '../users'
 
 export interface SocketSession {
-  id: string
+  socketId: string
   userId: string
-  gameId?: string
+  gameId?: string | undefined
 }
 
 export interface SessionsService {
-  createSession(
-    sessionId: string,
-    userId: string,
-  ): Promise<SocketSession | undefined>
-  getSession(sessionId: string): Promise<SocketSession | undefined>
-  subscribeToGame(sessionId: string, gameId: string): Promise<void>
-  destroySession(sessionId: string): Promise<void>
+  getSession(socketId: string): Promise<SocketSession | undefined>
+  getGameSessions(gameId: string): Promise<SocketSession[]>
+  createSession(socketId: string, userId: string): Promise<SocketSession>
+  subscribeToGame(socketId: string, gameId: string): Promise<SocketSession>
+  removeSession(socketId: string, gameId?: string): Promise<void>
 }
 
 export const SessionsService = inject<SessionsService>()

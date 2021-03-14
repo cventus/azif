@@ -4,7 +4,7 @@ import { Optional, validate } from '../../structure'
 import { DocumentClient } from '../ddb/DocumentClient'
 import { TableConfig } from '../ddb/TableConfig'
 import { LoggerService } from '../logger/LoggerService'
-import { ConnectionsService } from './ConnectionsService'
+import { SessionsService } from './SessionsService'
 
 const SocketItem = {
   id: String,
@@ -22,13 +22,13 @@ const SocketListItem = {
 }
 const isSocketListItem = validate(SocketListItem)
 
-export const DDBConnectionsService = inject(
+export const DDBSessionsService = inject(
   { DocumentClient, TableConfig, Logger: LoggerService },
-  ({ DocumentClient: client, TableConfig, Logger }): ConnectionsService => {
-    const logger = Logger.create('DDBConnectionsService')
+  ({ DocumentClient: client, TableConfig, Logger }): SessionsService => {
+    const logger = Logger.create('DDBSessionsService')
 
-    const ItemTableName = TableConfig.tables.connections
-    const ListTableName = TableConfig.tables.gameConnections
+    const ItemTableName = TableConfig.tables.sessions
+    const ListTableName = TableConfig.tables.gameSessions
 
     const ttl = () => {
       const epoch = Math.floor(new Date().valueOf() / 1000)
@@ -38,7 +38,7 @@ export const DDBConnectionsService = inject(
     }
 
     return Logger.traceMethods(logger, {
-      async removeConnection(socketId, gameId) {
+      async removeSession(socketId, gameId) {
         const { Attributes: item } = await client
           .delete({
             Key: { id: `socket:${socketId}` },
@@ -68,7 +68,7 @@ export const DDBConnectionsService = inject(
             .promise()
         }
       },
-      async getConnection(socketId) {
+      async getSession(socketId) {
         const { Item: item } = await client
           .get({
             Key: { id: `socket:${socketId}` },
@@ -92,7 +92,7 @@ export const DDBConnectionsService = inject(
           gameId: item.gameId,
         }
       },
-      async getGameConnections(gameId) {
+      async getGameSessions(gameId) {
         const { Items: items } = await client
           .query({
             TableName: ListTableName,
@@ -120,7 +120,7 @@ export const DDBConnectionsService = inject(
           userId: i.userId,
         }))
       },
-      async setGame(socketId, gameId) {
+      async subscribeToGame(socketId, gameId) {
         // Update socket entry
         const { Attributes: oldItem } = await client
           .update({
@@ -167,7 +167,7 @@ export const DDBConnectionsService = inject(
           .promise()
         return { gameId, socketId, userId: oldItem.userId }
       },
-      async createConnection(socketId, userId) {
+      async createSession(socketId, userId) {
         await client
           .put({
             Item: { id: `socket:${socketId}`, userId, ttl: ttl() },

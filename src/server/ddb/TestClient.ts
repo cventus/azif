@@ -53,7 +53,7 @@ const TestTables: DynamoDB.CreateTableInput[] = [
     },
   },
   {
-    TableName: 'game-connections',
+    TableName: 'game-sessions',
     KeySchema: [
       {
         AttributeName: 'gameId',
@@ -86,8 +86,8 @@ export const TestTableConfig = inject<TableConfig>({
     content: 'items',
     games: 'items',
     users: 'items',
-    connections: 'items',
-    gameConnections: 'game-connections',
+    sessions: 'items',
+    gameSessions: 'game-sessions',
   },
 })
 

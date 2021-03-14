@@ -7,7 +7,7 @@ import {
 import { inject } from '../../inject'
 import { validate } from '../../structure'
 
-import { ConnectionsService } from '../connections/ConnectionsService'
+import { SessionsService } from '../sessions/SessionsService'
 import { GameActionsHandler } from '../games/GameActionsHandler'
 import { makeGameState } from '../games/GamesService'
 import { LoggerService } from '../logger/LoggerService'
@@ -43,14 +43,14 @@ const hasRequestId = validate({ requestId: String })
 export const GameHandler = inject(
   {
     LoggerService,
-    ConnectionsService,
+    SessionsService,
     UsersService,
     SocketsService,
     GameActionsHandler,
   },
   ({
     LoggerService,
-    ConnectionsService: connections,
+    SessionsService: sessions,
     UsersService: users,
     SocketsService: sockets,
     GameActionsHandler: game,
@@ -93,12 +93,12 @@ export const GameHandler = inject(
 
         case 'disconnect':
           logger.info({ socketId }, 'player disconnected')
-          await connections.removeConnection(socketId)
+          await sessions.removeSession(socketId)
           break
 
         case 'message':
           const message = event.json
-          const connection = await connections.getConnection(event.socketId)
+          const connection = await sessions.getSession(event.socketId)
           if (!isClientMessage(message)) {
             if (hasRequestId(message)) {
               // Return a generic failure caused by request
@@ -136,7 +136,7 @@ export const GameHandler = inject(
             }
 
             // Associate socket with user
-            await connections.createConnection(socketId, user.id)
+            await sessions.createSession(socketId, user.id)
             await sendOk(socketId, message)
           } else {
             // User is authenticated
@@ -147,7 +147,7 @@ export const GameHandler = inject(
                 break
 
               case 'logout':
-                await connections.removeConnection(socketId)
+                await sessions.removeSession(socketId)
                 await sendOk(socketId, message)
                 break
 
@@ -167,11 +167,11 @@ export const GameHandler = inject(
                   await sendFail(socketId, message, 'game-action-failed')
                   return
                 }
-                const playerConnections = await connections.getGameConnections(
+                const playerSessions = await sessions.getGameSessions(
                   gameId,
                 )
                 const playerNames = await Promise.all(
-                  playerConnections.map(({ userId }) => users.get(userId)),
+                  playerSessions.map(({ userId }) => users.get(userId)),
                 )
                 const gameState = makeGameState(
                   result.state,
@@ -183,7 +183,7 @@ export const GameHandler = inject(
                   game: gameState,
                 }
                 await broadcast(
-                  playerConnections.map(({ socketId }) => socketId),
+                  playerSessions.map(({ socketId }) => socketId),
                   notification,
                 )
                 break
