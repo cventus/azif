@@ -8,4 +8,13 @@ export type Update = DynamoDB.DocumentClient.Update
 export type Delete = DynamoDB.DocumentClient.Delete
 export type DynamoDbSet = DynamoDB.DocumentClient.DynamoDbSet
 
-export const DocumentClient = inject<DynamoDB.DocumentClient>()
+export const DocumentClient = inject(
+  {},
+  ({}): DynamoDB.DocumentClient => {
+    const service = new DynamoDB({ apiVersion: '2012-08-10', })
+    return new DynamoDB.DocumentClient({
+      service,
+      convertEmptyValues: true,
+    })
+  },
+)
