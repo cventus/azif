@@ -81,20 +81,21 @@ export async function assemble<
 
   const providerNames: Name[] = Object.keys(providers)
 
-  const visited: Set<Name> = new Set()
-  const components: ComponentMap = {}
+  const visited: Set<any> = new Set()
+  const components: Map<any, any> = new Map()
   let destroyables: (() => Promise<void>)[] = []
 
   const build = async (name: Name) => {
-    if (components[name]) {
-      return components[name]
+    const provider = providers[name]
+    if (components.has(provider)) {
+      return components.get(provider)
     }
-    if (visited.has(name)) {
+    if (visited.has(provider)) {
       throw new Error('assemble: circular dependency')
     }
-    visited.add(name)
+    visited.add(provider)
 
-    const { create, dependencies, destroy } = providers[name]
+    const { create, dependencies, destroy } = provider
 
     const param: ComponentMap = {}
     for (const dependency of Object.keys(dependencies)) {
@@ -102,7 +103,7 @@ export async function assemble<
     }
 
     const component = await Promise.resolve(create(param))
-    components[name] = component
+    components.set(provider, component)
 
     if (destroy) {
       // Prepend to list so that in-order traveral destroys components in FILO order
@@ -117,7 +118,7 @@ export async function assemble<
   }
 
   return {
-    get: (name: Name) => components[name],
+    get: (name: Name) => components.get(providers[name]),
     destroy: async () => {
       const list = destroyables
       destroyables = []

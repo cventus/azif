@@ -24,4 +24,21 @@ describe('assemble', () => {
 
     expect(message).toBe('Hello! My name is John Doe. I like red, green, blue.')
   })
+
+  it('should create aliased providers only once', async () => {
+    let count = 0
+    const instanceCounter = inject({}, () => {
+      count += 1
+      return count
+    })
+
+    await assemble({
+      instanceCounter,
+      foo: instanceCounter,
+      bar: instanceCounter,
+      baz: instanceCounter,
+    })
+
+    expect(count).toBe(1)
+  })
 })
