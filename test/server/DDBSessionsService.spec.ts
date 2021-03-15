@@ -17,7 +17,7 @@ describe('DDBSessionsService', () => {
     const assembly = await assemble({
       ...TestModule,
       LoggerConfig: TestLoggerConfig(),
-      Logger: LoggerService,
+      LoggerService,
       DDBSessionsService,
     })
     service = assembly.get('DDBSessionsService')

@@ -27,16 +27,16 @@ interface SocketServer {
 }
 
 export const SocketServer = inject(
-  { SocketServerConfig, Logger: LoggerService },
-  ({ SocketServerConfig: config, Logger }): SocketServer => {
+  { SocketServerConfig, LoggerService },
+  ({ SocketServerConfig: config, LoggerService }): SocketServer => {
     const server = new WebSocket.Server(config)
-    const logger = Logger.create('SocketServer')
+    const logger = LoggerService.create('SocketServer')
 
     let counter = 0
     const makeId = () => `connection-${counter++}`
     const connections: Record<string, WebSocket> = {}
 
-    const service = Logger.traceMethods(
+    const service = LoggerService.traceMethods(
       logger,
       new (class extends EventEmitter implements SocketServer {
         send(socketId: string, json: unknown): Promise<void> {

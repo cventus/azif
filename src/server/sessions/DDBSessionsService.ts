@@ -23,9 +23,9 @@ const SocketListItem = {
 const isSocketListItem = validate(SocketListItem)
 
 export const DDBSessionsService = inject(
-  { DocumentClient, TableConfig, Logger: LoggerService },
-  ({ DocumentClient: client, TableConfig, Logger }): SessionsService => {
-    const logger = Logger.create('DDBSessionsService')
+  { DocumentClient, TableConfig, LoggerService },
+  ({ DocumentClient: client, TableConfig, LoggerService }): SessionsService => {
+    const logger = LoggerService.create('DDBSessionsService')
 
     const ItemTableName = TableConfig.tables.sessions
     const ListTableName = TableConfig.tables.gameSessions
@@ -37,7 +37,7 @@ export const DDBSessionsService = inject(
       return epoch + twoishHours
     }
 
-    return Logger.traceMethods(logger, {
+    return LoggerService.traceMethods(logger, {
       async removeSession(socketId, gameId) {
         const { Attributes: item } = await client
           .delete({
