@@ -52,6 +52,9 @@ const GameItem = {
   clues: Dictionary(Number),
   // Map from cardId to characterId that holds it
   cards: Dictionary(String),
+  // Map from characterId to set of conditions
+  conditions: Dictionary({ values: Array(String) }),
+  // Set of flipped cards
   flips: Optional({
     values: Array(String),
   }),
@@ -69,11 +72,13 @@ const itemToGameState = (item: GameItem): PartialGameState => {
   }, {} as Record<string, string[]>)
 
   const characters = Object.keys(clues).reduce((result, characterId) => {
+    const conditions = item.conditions[characterId]
     return {
       ...result,
       [characterId]: {
         cardIds: cardsByCharacter[characterId] || [],
         clues: clues[characterId],
+        conditions: conditions ? conditions.values : [],
       } as CharacterState,
     }
   }, {} as Record<string, CharacterState>)
@@ -133,6 +138,7 @@ export const GameTableActions = (TableName: string) => ({
         createdAt: new Date().valueOf(),
         players: {},
         clues: {},
+        conditions: {},
         cards: {},
       },
       ConditionExpression: 'attribute_not_exists(id)', // very unlikely ID clash
@@ -278,6 +284,60 @@ export const GameTableActions = (TableName: string) => ({
         ':1': 1,
       },
       ConditionExpression: and('attribute_exists(#id)', '#phase = :ongoing'),
+    }
+  },
+  addCondition(
+    gameId: string,
+    characterId: string,
+    conditionIds: DynamoDbSet,
+  ): Update {
+    return {
+      TableName,
+      Key: gameKey(gameId),
+      UpdateExpression: 'ADD #conditions.#characterId :conditionIds, #clock :1',
+      ExpressionAttributeNames: {
+        '#characterId': characterId,
+        ...expressionNames('id', 'clues', 'phase', 'conditions', 'clock'),
+      },
+      ExpressionAttributeValues: {
+        ':conditionIds': conditionIds,
+        ':conditionId': conditionIds.values[0],
+        ':ongoing': Phases.Ongoing,
+        ':1': 1,
+      },
+      ConditionExpression: and(
+        'attribute_exists(#id)',
+        'attribute_exists(#clues.#characterId)',
+        '(attribute_not_exists(#conditions.#characterId) or not contains(#conditions.#characterId, :conditionId))',
+        '#phase = :ongoing',
+      ),
+    }
+  },
+  removeCondition(
+    gameId: string,
+    characterId: string,
+    conditionIds: DynamoDbSet,
+  ): Update {
+    return {
+      TableName,
+      Key: gameKey(gameId),
+      UpdateExpression:
+        'DELETE #conditions.#characterId :conditionIds ADD #clock :1',
+      ExpressionAttributeNames: {
+        '#characterId': characterId,
+        ...expressionNames('id', 'phase', 'conditions', 'clock'),
+      },
+      ExpressionAttributeValues: {
+        ':conditionIds': conditionIds,
+        ':conditionId': conditionIds.values[0],
+        ':ongoing': Phases.Ongoing,
+        ':1': 1,
+      },
+      ConditionExpression: and(
+        'attribute_exists(#id)',
+        'contains(#conditions.#characterId, :conditionId)',
+        '#phase = :ongoing',
+      ),
     }
   },
   addPlayer(gameId: string, userId: string, clock: number): Update {
@@ -692,6 +752,42 @@ export const DDBGamesService = inject(
           if (!isFailedConditionalCheck(err)) {
             logger.error({ err, gameId }, `failed to set card face ${facing}`)
           }
+          return 'failure'
+        }
+      },
+      async addCondition(gameId, characterId, conditionId) {
+        try {
+          const { Attributes: item } = await client
+            .update({
+              ...actions.addCondition(
+                gameId,
+                characterId,
+                client.createSet([conditionId]),
+              ),
+              ReturnValues: 'ALL_NEW',
+            })
+            .promise()
+          return toGameState(item)
+        } catch (err: unknown) {
+          logger.error({ err, gameId }, 'failed to add condition')
+          return 'failure'
+        }
+      },
+      async removeCondition(gameId, characterId, conditionId) {
+        try {
+          const { Attributes: item } = await client
+            .update({
+              ...actions.removeCondition(
+                gameId,
+                characterId,
+                client.createSet([conditionId]),
+              ),
+              ReturnValues: 'ALL_NEW',
+            })
+            .promise()
+          return toGameState(item)
+        } catch (err: unknown) {
+          logger.error({ err, gameId }, 'failed to remove condition')
           return 'failure'
         }
       },

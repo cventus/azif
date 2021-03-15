@@ -35,6 +35,7 @@ export type PlayerState = StructureType<typeof PlayerState>
 
 export const CharacterState = {
   cardIds: Array(String),
+  conditions: Array(String),
   clues: Number,
 }
 export type CharacterState = StructureType<typeof CharacterState>

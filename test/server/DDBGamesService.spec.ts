@@ -20,7 +20,7 @@ describe('GamesService', () => {
   beforeEach(async () => {
     const assembly = await assemble({
       ...TestModule,
-      LoggerConfig: TestLoggerConfig(),
+      LoggerConfig: TestLoggerConfig({ defaultLevel: 'debug' }),
       LoggerService,
       DDBGamesService,
       DDBUsersService,
@@ -593,6 +593,109 @@ describe('GamesService', () => {
 
         expect(update1).toEqual('failure')
         expect(update2).toEqual('failure')
+      })
+    })
+
+    describe('.addCondition()', () => {
+      it('should add a condition to a character', async () => {
+        const update = await service.addCondition(game.id, 'angus', 'hungry')
+        expect(update).toEqual(
+          expect.objectContaining({
+            clock: game.clock + 1,
+            characters: {
+              angus: expect.objectContaining({
+                conditions: ['hungry'],
+              }),
+              bianca: expect.objectContaining({}),
+            },
+          }),
+        )
+      })
+
+      it('should allow several different conditions to be set on a character', async () => {
+        await service.addCondition(game.id, 'angus', 'hungry')
+        const update = await service.addCondition(game.id, 'angus', 'sleepy')
+        expect(update).toEqual(
+          expect.objectContaining({
+            characters: {
+              angus: expect.objectContaining({
+                conditions: expect.arrayContaining(['hungry', 'sleepy']),
+              }),
+              bianca: expect.objectContaining({}),
+            },
+          }),
+        )
+      })
+
+      it('should allow different characters to have the same condition', async () => {
+        await service.addCondition(game.id, 'angus', 'hungry')
+        const update = await service.addCondition(game.id, 'bianca', 'hungry')
+
+        expect(update).toEqual(
+          expect.objectContaining({
+            characters: {
+              angus: expect.objectContaining({
+                conditions: ['hungry'],
+              }),
+              bianca: expect.objectContaining({
+                conditions: ['hungry'],
+              }),
+            },
+          }),
+        )
+      })
+
+      it('should fail when trying to add the same condition to the same character twice', async () => {
+        await service.addCondition(game.id, 'angus', 'hungry')
+        const update = await service.addCondition(game.id, 'angus', 'hungry')
+
+        expect(update).toEqual('failure')
+      })
+
+      it('should fail when trying to add a condition to a non-existent character', async () => {
+        const update = await service.addCondition(game.id, 'zoe', 'hungry')
+
+        expect(update).toEqual('failure')
+      })
+    })
+
+    describe('.remvoeCondition()', () => {
+      it('should remove a condition from a character', async () => {
+        await service.addCondition(game.id, 'angus', 'hungry')
+        const update = await service.removeCondition(game.id, 'angus', 'hungry')
+        expect(update).toEqual(
+          expect.objectContaining({
+            clock: game.clock + 2,
+            characters: {
+              angus: expect.objectContaining({
+                conditions: [],
+              }),
+              bianca: expect.objectContaining({}),
+            },
+          }),
+        )
+      })
+
+      it('should remove only the specified condition from a character', async () => {
+        await service.addCondition(game.id, 'angus', 'hungry')
+        await service.addCondition(game.id, 'angus', 'sleepy')
+        const update = await service.removeCondition(game.id, 'angus', 'hungry')
+        expect(update).toEqual(
+          expect.objectContaining({
+            characters: {
+              angus: expect.objectContaining({
+                conditions: ['sleepy'],
+              }),
+              bianca: expect.objectContaining({}),
+            },
+          }),
+        )
+      })
+
+      it('should fail when trying to remove a non-existent condition', async () => {
+        const update = await service.removeCondition(game.id, 'angus', 'hungry')
+
+        expect(update).toEqual('failure')
       })
     })
 

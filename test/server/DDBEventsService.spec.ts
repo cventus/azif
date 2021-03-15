@@ -35,9 +35,9 @@ describe('DDBEventsService', () => {
       action: {
         type: 'chat',
         text: 'message 1',
-      }
+      },
     }
-    
+
     await service.write(event)
 
     const item = await service.get(gameId, 0)
@@ -54,7 +54,7 @@ describe('DDBEventsService', () => {
         action: {
           type: 'chat',
           text: 'message 1',
-        }
+        },
       }
 
       const event1: GameEvent = {
@@ -65,9 +65,9 @@ describe('DDBEventsService', () => {
         action: {
           type: 'chat',
           text: 'message 2',
-        }
+        },
       }
-    
+
       await service.write(event0)
       await service.write(event1)
 

@@ -86,6 +86,16 @@ export interface GamesService {
     cardId: string,
     facing: Facing,
   ): Promise<PartialGameState | Failure>
+  addCondition(
+    gameId: string,
+    characterId: string,
+    conditionId: string,
+  ): Promise<PartialGameState | Failure>
+  removeCondition(
+    gameId: string,
+    characterId: string,
+    conditionId: string,
+  ): Promise<PartialGameState | Failure>
 }
 
 export const GamesService = inject<GamesService>()

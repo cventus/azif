@@ -167,9 +167,7 @@ export const GameHandler = inject(
                   await sendFail(socketId, message, 'game-action-failed')
                   return
                 }
-                const playerSessions = await sessions.getGameSessions(
-                  gameId,
-                )
+                const playerSessions = await sessions.getGameSessions(gameId)
                 const playerNames = await Promise.all(
                   playerSessions.map(({ userId }) => users.get(userId)),
                 )

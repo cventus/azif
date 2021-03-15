@@ -31,8 +31,8 @@ export async function main(): Promise<CleanupHandler> {
       gameSessions: process.env.SESSIONS_TABLE_NAME!,
       games: process.env.ITEMS_TABLE_NAME!,
       sessions: process.env.ITEMS_TABLE_NAME!,
-      users:  process.env.ITEMS_TABLE_NAME!,
-    }
+      users: process.env.ITEMS_TABLE_NAME!,
+    },
   }
 
   const assembly = await assemble({
