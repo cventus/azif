@@ -13,6 +13,8 @@ const EpochMs = Number
 
 export const ContentSet = {
   id: String,
+  name: String,
+  description: Array(String),
   cards: Dictionary(Card),
 }
 export type ContentSet = StructureType<typeof ContentSet>

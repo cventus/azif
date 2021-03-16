@@ -20,7 +20,7 @@ describe('GamesService', () => {
   beforeEach(async () => {
     const assembly = await assemble({
       ...TestModule,
-      LoggerConfig: TestLoggerConfig({ defaultLevel: 'debug' }),
+      LoggerConfig: TestLoggerConfig(),
       LoggerService,
       DDBGamesService,
       DDBUsersService,

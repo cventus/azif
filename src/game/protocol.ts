@@ -80,7 +80,9 @@ export const ServerGameNotification = {
   event: GameEvent,
   game: GameState,
 }
-export type ServerGameNotification = StructureType<typeof ServerGameNotification>
+export type ServerGameNotification = StructureType<
+  typeof ServerGameNotification
+>
 
 const ServerSuccessResponse = {
   type: Literal('success'),
