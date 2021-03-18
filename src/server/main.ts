@@ -18,40 +18,63 @@ import { DDBUsersService } from './users/DDBUsersService'
 
 type CleanupHandler = () => Promise<void>
 
+const getEnv = (name: string): string => {
+  const value = process.env[name]
+  if (!value) {
+    throw new Error(`Variable not defined: ${name}`)
+  }
+  return value
+}
+
 export async function main(): Promise<CleanupHandler> {
-  const config: SocketServerConfig = {
+  const serverConfig: SocketServerConfig = {
     port: Number(process.env.PORT) || 3001,
+    host: process.env.HOST,
     path: '/ws',
   }
 
-  const TableConfig: TableConfig = {
+  const tableConfig: TableConfig = {
     tables: {
-      content: process.env.ITEMS_TABLE_NAME!,
-      events: process.env.EVENTS_TABLE_NAME!,
-      gameSessions: process.env.SESSIONS_TABLE_NAME!,
-      games: process.env.ITEMS_TABLE_NAME!,
-      sessions: process.env.ITEMS_TABLE_NAME!,
-      users: process.env.ITEMS_TABLE_NAME!,
+      content: getEnv('ITEMS_TABLE_NAME'),
+      events: getEnv('EVENTS_TABLE_NAME'),
+      gameSessions: getEnv('SESSIONS_TABLE_NAME'),
+      games: getEnv('process.env.ITEMS_TABLE_NAME'),
+      sessions: getEnv('process.env.ITEMS_TABLE_NAME'),
+      users: getEnv('process.env.ITEMS_TABLE_NAME'),
     },
   }
 
-  const assembly = await assemble({
-    LoggerConfig: EnvironmentLoggerConfig,
-    LoggerService,
-    DocumentClient,
-    EventsService: DDBEventsService,
-    ContentService: DDBContentService,
-    SocketServerConfig: inject(config),
-    SocketServer,
-    SocketsService: SocketServer, // alias
-    SessionsService: DDBSessionsService,
-    TableConfig: inject(TableConfig),
-    UsersService: DDBUsersService,
-    GamesService: DDBGamesService,
-    GameActionsHandler,
-    GameServer,
-    GameHandler,
-  })
-
-  return async () => assembly.destroy()
+  const app = await init(serverConfig, tableConfig)
+  await app.get('SocketServer').listen()
+  return () => app.destroy()
 }
+
+export const AppServices = {
+  LoggerConfig: EnvironmentLoggerConfig,
+  LoggerService,
+  DocumentClient,
+  EventsService: DDBEventsService,
+  ContentService: DDBContentService,
+  SocketServer,
+  SocketsService: SocketServer, // alias
+  SessionsService: DDBSessionsService,
+  UsersService: DDBUsersService,
+  GamesService: DDBGamesService,
+  GameActionsHandler,
+  GameServer,
+  GameHandler,
+} as const
+
+export const init = (
+  serverConfig: SocketServerConfig,
+  tableConfig: TableConfig,
+) => {
+  return assemble({
+    ...AppServices,
+    TableConfig: inject(tableConfig),
+    SocketServerConfig: inject(serverConfig),
+  })
+}
+
+type PromisedType<A> = A extends Promise<infer B> ? B : never
+export type AppAssembly = PromisedType<ReturnType<typeof init>>

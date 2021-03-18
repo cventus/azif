@@ -97,6 +97,14 @@ const ServerFailureResponse = {
 }
 export type ServerFailureResponse = StructureType<typeof ServerFailureResponse>
 
+const ServerLoginResponse = {
+  type: Literal('login'),
+  requestId: String,
+  session: SessionState,
+}
+export type ServerLoginResponse = StructureType<typeof ServerLoginResponse>
+export const isServerLoginResponse = validate(ServerLoginResponse)
+
 const ServerGetGameResponse = {
   type: Literal('get'),
   resource: Literal('game'),

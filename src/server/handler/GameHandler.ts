@@ -3,6 +3,7 @@ import {
   ServerGameNotification,
   isClientMessage,
   ServerMessage,
+  ServerLoginResponse,
 } from '../../game/protocol'
 import { inject } from '../../inject'
 import { validate } from '../../structure'
@@ -137,21 +138,50 @@ export const GameHandler = inject(
 
             // Associate socket with user
             await sessions.createSession(socketId, user.id)
-            await sendOk(socketId, message)
+            await send(socketId, {
+              type: 'login',
+              requestId: message.requestId,
+              session: {
+                name: user.name,
+                currentGameId: null,
+                gameIds: user.gameIds,
+                username,
+                ...(user.recentGame && {
+                  gameId: user.recentGame.id,
+                  timestamp: user.recentGame.timestamp.valueOf(),
+                })
+              }
+            } as ServerLoginResponse)
           } else {
             // User is authenticated
             switch (message.type) {
-              case 'login':
+              case 'login': {
                 // Forbidden, must disconnect first
                 await sendFail(socketId, message, 'already-authenticated')
                 break
+              }
 
-              case 'logout':
+              case 'logout': {
                 await sessions.removeSession(socketId)
                 await sendOk(socketId, message)
                 break
+              }
 
-              case 'action':
+              case 'get': {
+                switch (message.resource) {
+                  case 'connection':
+                    break;
+
+                  case 'content':
+                    break;
+
+                  case 'game':
+                    break;
+                }
+                break;
+              }
+
+              case 'action': {
                 const gameId = connection.gameId
                 if (!gameId) {
                   await sendFail(socketId, message, 'no-game')
@@ -185,6 +215,7 @@ export const GameHandler = inject(
                   notification,
                 )
                 break
+              }
             }
           }
           break

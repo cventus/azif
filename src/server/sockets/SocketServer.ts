@@ -1,18 +1,23 @@
 import { EventEmitter } from 'events'
+import http from 'http'
 import WebSocket from 'ws'
+import pino from 'pino'
 
 import { inject } from '../../inject'
 import { LoggerService } from '../logger/LoggerService'
 
 export interface SocketServerConfig {
   path: string
+  host?: string
   port: number
 }
 
 export const SocketServerConfig = inject<SocketServerConfig>()
 
-interface SocketServer {
+export interface SocketServer {
+  listen(): Promise<void>
   close(): Promise<void>
+  readonly server: http.Server
 
   send(socketId: string, json: unknown): Promise<void>
   disconnect(socketId: string): Promise<void>
@@ -26,64 +31,48 @@ interface SocketServer {
   off(event: 'disconnect', cb: (socketId: string) => void): this
 }
 
-export const SocketServer = inject(
-  { SocketServerConfig, LoggerService },
-  ({ SocketServerConfig: config, LoggerService }): SocketServer => {
-    const server = new WebSocket.Server(config)
-    const logger = LoggerService.create('SocketServer')
+class SocketServerImpl extends EventEmitter implements SocketServer {
+  public readonly server: http.Server
+  private readonly config: SocketServerConfig
+  private readonly wss: WebSocket.Server
 
-    let counter = 0
-    const makeId = () => `connection-${counter++}`
-    const connections: Record<string, WebSocket> = {}
+  private counter: number
+  private connections: Record<string, WebSocket>
 
-    const service = LoggerService.traceMethods(
-      logger,
-      new (class extends EventEmitter implements SocketServer {
-        send(socketId: string, json: unknown): Promise<void> {
-          return new Promise((resolve, reject) => {
-            connections[socketId].send(JSON.stringify(json), (err) => {
-              if (err) {
-                reject(err)
-              } else {
-                resolve()
-              }
-            })
-          })
-        }
+  private makeId() {
+    return `connection-${this.counter++}`
+  } 
 
-        disconnect(socketId: string): Promise<void> {
-          return Promise.resolve(connections[socketId].close())
-        }
 
-        close(): Promise<void> {
-          return new Promise((resolve, reject) => {
-            server.close((err) => {
-              if (err) {
-                reject(err)
-              } else {
-                resolve()
-              }
-            })
-          })
-        }
-      })(),
-    )
+  constructor(
+    config: SocketServerConfig,
+    logger: pino.Logger,
+  ) {
+    super()
+    this.server = http.createServer()
+    this.config = config
+    this.wss = new WebSocket.Server({
+      server: this.server,
+      path: config.path,
+    })
+    this.counter = 0
+    this.connections = {}
 
-    server.on('connection', (ws) => {
-      const socketId = makeId()
-      connections[socketId] = ws
+    this.wss.on('connection', (ws) => {
+      const socketId = this.makeId()
+      this.connections[socketId] = ws
 
       ws.on('close', (code, reason) => {
         logger.info({ code, reason, socketId }, 'websocket closed')
-        service.emit('disconnect', socketId)
-        delete connections[socketId]
+        this.emit('disconnect', socketId)
+        delete this.connections[socketId]
       })
 
       ws.on('message', (data) => {
         try {
           const json = data.toString('utf-8')
           const value = JSON.parse(json)
-          service.emit('message', socketId, value)
+          this.emit('message', socketId, value)
         } catch (err) {
           logger.error({ err, socketId }, 'message error')
         }
@@ -94,9 +83,63 @@ export const SocketServer = inject(
       })
     })
 
-    server.on('error', (err) => {
+    this.wss.on('error', (err) => {
       logger.error(err, 'websocket server error')
     })
+
+  }
+
+  send(socketId: string, json: unknown): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.connections[socketId].send(JSON.stringify(json), (err) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve()
+        }
+      })
+    })
+  }
+
+  listen() {
+    return new Promise<void>((resolve) => {
+      this.server.ref()
+      this.server.listen(this.config.port, this.config.host, () => resolve(undefined))
+    })
+  }
+
+  disconnect(socketId: string): Promise<void> {
+    return Promise.resolve(this.connections[socketId].close())
+  }
+
+  close(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.server.unref()
+      this.wss.close((err) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve()
+        }
+      })
+    })
+  }
+}
+
+export const SocketServer = inject(
+  { SocketServerConfig, LoggerService },
+  ({ SocketServerConfig: config, LoggerService }): SocketServer => {
+    const server = http.createServer()
+    const wss = new WebSocket.Server({
+      server,
+      path: config.path,
+    })
+    const logger = LoggerService.create('SocketServer')
+
+    const service = LoggerService.traceMethods(
+      logger,
+      new SocketServerImpl(config, logger)
+    )
 
     return service
   },
