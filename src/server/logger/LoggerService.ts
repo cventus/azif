@@ -62,7 +62,7 @@ export interface LoggerService {
     func: T,
     that?: ThisType<T>,
   ): T
-  traceMethods<T>(logger: pino.Logger, obj: T): T
+  traceMethods<T extends object>(logger: pino.Logger, obj: T): T
 }
 
 export const LoggerService = inject(
@@ -105,7 +105,7 @@ export const LoggerService = inject(
           return func
         }
       },
-      traceMethods<T>(logger: pino.Logger, obj: T): T {
+      traceMethods<T extends object>(logger: pino.Logger, obj: T): T {
         return Object.entries(obj).reduce((result, [key, value]) => {
           if (typeof value === 'function') {
             const { name } = logger.bindings()
@@ -116,17 +116,11 @@ export const LoggerService = inject(
             ) {
               const methodLogger = logger.child({ name, method: key })
               methodLogger.level = 'trace'
-              return {
-                ...result,
-                [key]: service.traceFunction(methodLogger, value, obj),
-              }
+              result[key as keyof T] = service.traceFunction(methodLogger, value as any, obj)
             }
           }
-          return {
-            ...result,
-            [key]: value,
-          }
-        }, {} as Partial<T>) as T
+          return result
+        }, Object.create(obj) as Partial<T>) as T
       },
     }
 
