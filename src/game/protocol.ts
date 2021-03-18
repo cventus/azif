@@ -10,7 +10,7 @@ import {
   TradeCardAction,
 } from './actions'
 import { DieRoll } from './dice'
-import { ConnectionState, ContentSet, GameEvent, GameState } from './resources'
+import { SessionState, ContentSet, GameEvent, GameState } from './resources'
 
 const DicePlayerAction = {
   type: Literal('dice'),
@@ -110,7 +110,7 @@ const ServerGetProfileResponse = {
   resource: Literal('connection'),
   requestId: String,
   resourceId: String,
-  connection: ConnectionState,
+  connection: SessionState,
 }
 
 const ServerGetContentResponse = {
@@ -125,6 +125,7 @@ const ServerMessage = Union(
   ServerSuccessResponse,
   ServerFailureResponse,
   ServerGameNotification,
+  ServerLoginResponse,
   ServerGetGameResponse,
   ServerGetProfileResponse,
   ServerGetContentResponse,

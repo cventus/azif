@@ -62,15 +62,14 @@ export const GameState = {
 }
 export type GameState = StructureType<typeof GameState>
 
-export const ConnectionState = {
-  id: String,
+export const SessionState = {
   name: String,
   username: String,
   gameIds: Array(String),
-  currentGameId: String,
+  currentGameId: Union(String, Literal(null)),
   recent: Optional({
     gameId: String,
     timestamp: EpochMs,
   }),
 }
-export type ConnectionState = StructureType<typeof ConnectionState>
+export type SessionState = StructureType<typeof SessionState>
