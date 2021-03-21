@@ -1,6 +1,7 @@
 export interface User {
   id: string
   name: string
+  username: string
   gameIds: string[]
   recentGame?: {
     id: string

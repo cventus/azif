@@ -54,7 +54,14 @@ function itemToUser(item: UserItem): User {
   return {
     id: item.id,
     name: item.name,
+    username: item.username,
     gameIds: item.gameIds || [],
+    ...(item.recentGameEpoch && item.recentGameId && {
+      recentGame: {
+        id: item.recentGameId,
+        timestamp: new Date(item.recentGameEpoch),
+      }
+    }),
   }
 }
 
@@ -299,6 +306,7 @@ export const DDBUsersService = inject(
           return {
             id: userId,
             name,
+            username: credentials.username,
             gameIds: [],
           } as User
         } catch (e) {

@@ -1,5 +1,5 @@
 import { inject } from '../../inject'
-import { Optional, validate } from '../../structure'
+import { Literal, Union, validate } from '../../structure'
 
 import { DocumentClient } from '../ddb/DocumentClient'
 import { TableConfig } from '../ddb/TableConfig'
@@ -9,7 +9,7 @@ import { SessionsService } from './SessionsService'
 const SocketItem = {
   id: String,
   userId: String,
-  gameId: Optional(String),
+  gameId: Union(String, Literal(null)),
   ttl: Number,
 }
 const isSocketItem = validate(SocketItem)
@@ -154,28 +154,30 @@ export const DDBSessionsService = inject(
         }
 
         // Add socket id to list
-        await client
-          .put({
-            Item: {
-              gameId,
-              socketId,
-              userId: oldItem.userId,
-              ttl: oldItem.ttl,
-            },
-            TableName: ListTableName,
-          })
-          .promise()
-        return { gameId, socketId, userId: oldItem.userId }
+        if (gameId !== null) {
+          await client
+            .put({
+              Item: {
+                gameId,
+                socketId,
+                userId: oldItem.userId,
+                ttl: oldItem.ttl,
+              },
+              TableName: ListTableName,
+            })
+            .promise()
+        }
+        return { gameId: gameId, socketId, userId: oldItem.userId }
       },
       async createSession(socketId, userId) {
         await client
           .put({
-            Item: { id: `socket:${socketId}`, userId, ttl: ttl() },
+            Item: { id: `socket:${socketId}`, userId, gameId: null, ttl: ttl() },
             TableName: ItemTableName,
             ConditionExpression: 'attribute_not_exists(id)',
           })
           .promise()
-        return { socketId, userId }
+        return { socketId, userId, gameId: null }
       },
     })
   },

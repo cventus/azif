@@ -36,6 +36,7 @@ describe('DDBSessionsService', () => {
 
       expect(before).toEqual(undefined)
       expect(after).toEqual({
+        gameId: null,
         socketId: 'S_1',
         userId: 'user:1',
       })

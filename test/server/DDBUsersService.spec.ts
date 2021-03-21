@@ -179,7 +179,10 @@ describe('DDBUsersService', () => {
       const newAuth = await service.authenticate('johnny', 'very-secret')
 
       expect(oldAuth).toBe(undefined)
-      expect(newAuth).toEqual(user)
+      expect(newAuth).toEqual({
+        ...user,
+        username: 'johnny',
+      })
     })
 
     it(`.setPassword() should update a user's password`, async () => {
