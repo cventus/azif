@@ -7,6 +7,22 @@ export interface LoggerConfig {
   levels: Record<string, pino.Level>
 }
 
+interface Thenable {
+  then<T>(
+    onResolved: (result: unknown) => T,
+    onRejected: (err: unknown) => unknown,
+  ): Promise<T>
+}
+
+const isThenable = (value: unknown): value is Thenable => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'then' in value &&
+    typeof (value as Thenable)['then'] === 'function'
+  )
+}
+
 const readLevel = (value: unknown): pino.Level | undefined => {
   switch (value) {
     case 'fatal':
@@ -94,8 +110,21 @@ export const LoggerService = inject(
             try {
               logger.trace({ args }, 'ENTER')
               const result = func.apply(that || this, args)
-              logger.trace({ return: result }, 'EXIT')
-              return result
+              if (isThenable(result)) {
+                return result.then(
+                  (promisedResult) => {
+                    logger.trace({ return: promisedResult }, 'EXIT')
+                    return promisedResult
+                  },
+                  (err) => {
+                    logger.trace({ err }, 'THROW')
+                    throw err
+                  },
+                ) as ReturnType<T>
+              } else {
+                logger.trace({ return: result }, 'EXIT')
+                return result
+              }
             } catch (err) {
               logger.trace({ err }, 'THROW')
               throw err
@@ -116,7 +145,11 @@ export const LoggerService = inject(
             ) {
               const methodLogger = logger.child({ name, method: key })
               methodLogger.level = 'trace'
-              result[key as keyof T] = service.traceFunction(methodLogger, value as any, obj)
+              result[key as keyof T] = service.traceFunction(
+                methodLogger,
+                value as any,
+                obj,
+              )
             }
           }
           return result
