@@ -57,7 +57,7 @@ export const GameActionsHandler = inject(
       return { type: 'update', state, event }
     }
 
-    const epoch = new Date().valueOf() + Math.random()
+    const epoch = new Date().valueOf()
     switch (action.type) {
       case 'flip-card':
         return writeEvent(

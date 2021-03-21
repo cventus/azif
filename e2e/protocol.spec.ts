@@ -9,11 +9,30 @@ import { User } from '../src/server/users'
 import { UsersService } from '../src/server/users/UsersService'
 
 import * as p from '../src/game/protocol'
+import { ContentSet, ContentSetPreview } from '../src/game/resources'
 
 let socketServer: SocketServer
 let server: http.Server
 let users: UsersService
 let cleanup: () => Promise<void>
+
+const defaultContentPreview: ContentSetPreview = {
+  id: 'content:default',
+  description: ['the default cards'],
+  name: 'default',
+}
+
+const defaultContent: ContentSet = {
+  ...defaultContentPreview,
+  cards: {
+    c00: {
+      id: 'c00',
+      type: 'common-item',
+      name: 'brush',
+      set: 'content:default',
+    }
+  }
+}
 
 beforeAll(async () => {
   const serverConfig: SocketServerConfig = {
@@ -30,6 +49,10 @@ beforeAll(async () => {
   users = app.get('UsersService')
   server = socketServer.server
   cleanup = () => app.destroy()
+
+  // Setup
+  const contents = app.get('ContentService')
+  await contents.defineContent([defaultContent])
 })
 afterAll(() => cleanup())
 
@@ -42,10 +65,12 @@ describe('WebSocket protocol', () => {
   beforeEach(async () => {
     alice = await users.createUser('Alice', { username: 'alice', password: 'password' })
   })
+  afterEach(async () => {
+    await users.removeUser(alice.id)
+  })
 
-  it('users can log in and create games', async () => {
-    await request(server)
-      .ws('/ws')
+  it('users can log in and create games', () =>
+    request(server).ws('/ws')
       .sendJson({
         type: 'login',
         username: 'alice',
@@ -62,7 +87,28 @@ describe('WebSocket protocol', () => {
           username: 'alice',
         }
       } as p.ServerLoginResponse)
+      .sendJson({
+        type: 'get',
+        resource: ['contents'],
+        requestId: 'get-contents-req'
+      } as p.PlayerGetRequest)
+      .expectJson({
+        type: 'get',
+        requestId: 'get-contents-req',
+        resource: ['contents'],
+        list: [defaultContentPreview],
+      } as p.ServerGetContentListResponse)
+      .sendJson({
+        type: 'create-game',
+        contentSets: [defaultContentPreview.id],
+        name: 'my game',
+        requestId: 'create-game-req'
+      } as p.PlayerCreateGameRequest)
+      .expectJson({
+        type: 'success',
+        requestId: 'create-game-req',
+      } as p.ServerSuccessResponse)
       .close()
       .expectClosed()
-  })
+  )
 })

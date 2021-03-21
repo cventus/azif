@@ -16,6 +16,20 @@ export const DiceAction = {
 }
 export type DiceAction = StructureType<typeof DiceAction>
 
+export const AddPlayerAction = {
+  type: Literal('add-player'),
+  playerId: String,
+  playerName: String,
+}
+export type AddPlayerAction = StructureType<typeof AddPlayerAction>
+
+export const RemovePlayerAction = {
+  type: Literal('remove-player'),
+  playerId: String,
+  playerName: String,
+}
+export type RemovePlayerAction = StructureType<typeof RemovePlayerAction>
+
 export const SetConditionAction = {
   type: Literal('set-condition'),
   character: String,
@@ -67,6 +81,8 @@ export type DiscardCardAction = StructureType<typeof DiscardCardAction>
 export const GameAction = Union(
   ChatAction,
   DiceAction,
+  AddPlayerAction,
+  RemovePlayerAction,
   DrawCardAction,
   SetConditionAction,
   RemoveConditionAction,

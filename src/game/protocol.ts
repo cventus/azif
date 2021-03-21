@@ -1,4 +1,4 @@
-import { validate, Literal, Union, StructureType } from '../structure'
+import { validate, Literal, Union, StructureType, Tuple } from '../structure'
 import {
   ChatAction,
   DiscardCardAction,
@@ -10,7 +10,7 @@ import {
   TradeCardAction,
 } from './actions'
 import { DieRoll } from './dice'
-import { SessionState, ContentSet, GameEvent, GameState } from './resources'
+import { SessionState, ContentSet, GameEvent, GameState, ContentSetPreview } from './resources'
 
 const DicePlayerAction = {
   type: Literal('dice'),
@@ -31,10 +31,11 @@ const PlayerAction = Union(
 )
 export type PlayerAction = StructureType<typeof PlayerAction>
 
-const ResourceType = Union(
-  Literal('game'),
-  Literal('connection'),
-  Literal('content'),
+const ResourceId = Union(
+  Tuple(Literal('session')),
+  Tuple(Literal('games'), String),
+  Tuple(Literal('contents'), String),
+  Tuple(Literal('contents')),
 )
 
 const PlayerLoginRequest = {
@@ -51,6 +52,35 @@ const PlayerLogoutRequest = {
 }
 export type PlayerLogoutMessage = StructureType<typeof PlayerLogoutRequest>
 
+const PlayerCreateGameRequest = {
+  type: Literal('create-game'),
+  requestId: String,
+  name: String,
+  contentSets: Array(String),
+}
+export type PlayerCreateGameRequest = StructureType<typeof PlayerCreateGameRequest>
+
+const PlayerJoinGameRequest = {
+  type: Literal('join-game'),
+  requestId: String,
+  gameId: String,
+}
+export type PlayerJoinGameRequest = StructureType<typeof PlayerJoinGameRequest>
+
+const PlayerLeaveGameRequest = {
+  type: Literal('leave-game'),
+  requestId: String,
+  gameId: String,
+}
+export type PlayerLeaveGameRequest = StructureType<typeof PlayerLeaveGameRequest>
+
+const PlayerSubscribeToGameRequest = {
+  type: Literal('subscribe-to-game'),
+  requestId: String,
+  gameId: String,
+}
+export type PlayerSubscribeToGameRequest = StructureType<typeof PlayerSubscribeToGameRequest>
+
 const PlayerActionRequest = {
   type: Literal('action'),
   requestId: String,
@@ -60,15 +90,18 @@ export type PlayerActionRequest = StructureType<typeof PlayerActionRequest>
 
 const PlayerGetRequest = {
   type: Literal('get'),
-  resource: ResourceType,
+  resource: ResourceId,
   requestId: String,
-  resourceId: String,
 }
 export type PlayerGetRequest = StructureType<typeof PlayerGetRequest>
 
 const ClientMessage = Union(
   PlayerLoginRequest,
   PlayerLogoutRequest,
+  PlayerCreateGameRequest,
+  PlayerJoinGameRequest,
+  PlayerLeaveGameRequest,
+  PlayerSubscribeToGameRequest,
   PlayerActionRequest,
   PlayerGetRequest,
 )
@@ -107,27 +140,32 @@ export const isServerLoginResponse = validate(ServerLoginResponse)
 
 const ServerGetGameResponse = {
   type: Literal('get'),
-  resource: Literal('game'),
+  resource: Tuple(Literal('games'), String),
   requestId: String,
-  resourceId: String,
   game: GameState,
 }
 
 const ServerGetProfileResponse = {
   type: Literal('get'),
-  resource: Literal('connection'),
+  resource: Tuple(Literal('session')),
   requestId: String,
-  resourceId: String,
-  connection: SessionState,
+  session: SessionState,
 }
 
 const ServerGetContentResponse = {
   type: Literal('get'),
-  resource: Literal('content'),
+  resource: Tuple(Literal('contents'), String),
   requestId: String,
-  resourceId: String,
   content: ContentSet,
 }
+
+const ServerGetContentListResponse = {
+  type: Literal('get'),
+  resource: Tuple(Literal('contents')),
+  requestId: String,
+  list: Array(ContentSetPreview),
+}
+export type ServerGetContentListResponse = StructureType<typeof ServerGetContentListResponse>
 
 const ServerMessage = Union(
   ServerSuccessResponse,
@@ -137,6 +175,7 @@ const ServerMessage = Union(
   ServerGetGameResponse,
   ServerGetProfileResponse,
   ServerGetContentResponse,
+  ServerGetContentListResponse,
 )
 export type ServerMessage = StructureType<typeof ServerMessage>
 export const isServerMessage = validate(ServerMessage)
