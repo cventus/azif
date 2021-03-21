@@ -11,10 +11,15 @@ import { Card } from './rules'
 
 const EpochMs = Number
 
-export const ContentSet = {
+export const ContentSetPreview = {
   id: String,
   name: String,
   description: Array(String),
+}
+export type ContentSetPreview = StructureType<typeof ContentSetPreview>
+
+export const ContentSet = {
+  ...ContentSetPreview,
   cards: Dictionary(Card),
 }
 export type ContentSet = StructureType<typeof ContentSet>
