@@ -85,9 +85,8 @@ export const GameHandler = inject(
     }
 
     const makeGame = async (game: PartialGameState): Promise<GameState> => {
-      const playerSessions = await sessions.getGameSessions(game.id)
       const playerNames = await Promise.all(
-        playerSessions.map(({ userId }) => users.get(userId)),
+        Object.keys(game.players).map((userId) => users.get(userId)),
       )
       return makeGameState(
         game,

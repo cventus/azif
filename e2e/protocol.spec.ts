@@ -158,12 +158,12 @@ describe('WebSocket protocol', () => {
         clock: 1,
         contentSetIds: [defaultContentPreview.id],
         name: 'my game',
-        createdAt: expect.anything(), //(Number),
+        createdAt: expect.anything(),
         flippedCardIds: [],
         phase: 'starting',
         players: {
           [alice.id]: {
-            name: expect.anything(), // alice.name,
+            name: alice.name,
           }
         },
       })
