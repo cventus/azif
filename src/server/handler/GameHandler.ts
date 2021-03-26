@@ -131,8 +131,16 @@ export const GameHandler = inject(
         case 'create-game': {
           const { name, contentSets } = message
           const newGame = await games.createGame(name, contentSets)
-          await games.addPlayer(newGame.id, session.userId)
-          await sendOk(socketId, message)
+          const game = await games.addPlayer(newGame.id, session.userId)
+          if (game === 'failure') {
+            sendFail(socketId, message, 'failed')
+            return
+          }
+          await send(socketId, {
+            type: 'create-game',
+            requestId: message.requestId,
+            game: await makeGame(game),
+          })
           break;
         }
 

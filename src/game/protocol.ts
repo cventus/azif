@@ -116,6 +116,7 @@ export const ServerGameNotification = {
 export type ServerGameNotification = StructureType<
   typeof ServerGameNotification
 >
+export const isServerGameNotification = validate(ServerGameNotification)
 
 const ServerSuccessResponse = {
   type: Literal('success'),
@@ -137,6 +138,13 @@ const ServerLoginResponse = {
 }
 export type ServerLoginResponse = StructureType<typeof ServerLoginResponse>
 export const isServerLoginResponse = validate(ServerLoginResponse)
+
+const ServerCreateGameResponse = {
+  type: Literal('create-game'),
+  requestId: String,
+  game: GameState,
+}
+export type ServerCreateGameResponse = StructureType<typeof ServerCreateGameResponse>
 
 const ServerGetGameResponse = {
   type: Literal('get'),
@@ -167,15 +175,22 @@ const ServerGetContentListResponse = {
 }
 export type ServerGetContentListResponse = StructureType<typeof ServerGetContentListResponse>
 
-const ServerMessage = Union(
+const ServerResponse = Union(
   ServerSuccessResponse,
   ServerFailureResponse,
-  ServerGameNotification,
   ServerLoginResponse,
+  ServerCreateGameResponse,
   ServerGetGameResponse,
   ServerGetProfileResponse,
   ServerGetContentResponse,
   ServerGetContentListResponse,
+)
+export type ServerResponse = StructureType<typeof ServerMessage>
+export const isServerResponse = validate(ServerResponse)
+
+const ServerMessage = Union(
+  ServerResponse,
+  ServerGameNotification,
 )
 export type ServerMessage = StructureType<typeof ServerMessage>
 export const isServerMessage = validate(ServerMessage)
