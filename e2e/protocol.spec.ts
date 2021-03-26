@@ -11,6 +11,7 @@ import { UsersService } from '../src/server/users/UsersService'
 
 import * as p from '../src/game/protocol'
 import { ContentSet, ContentSetPreview, GameState } from '../src/game/resources'
+import { TestClient } from './TestClient'
 
 let socketServer: SocketServer
 let server: http.Server
@@ -60,6 +61,19 @@ afterAll(() => cleanup())
 beforeEach(() => socketServer.listen())
 afterEach(() => socketServer.close()) // closes all sockets
 
+const wsUrl = (): string => {
+  const addr = server.address()
+  if (!addr) {
+    throw new Error('Server has no address')
+  }
+  if (typeof addr === 'string') {
+    throw new Error(`Unexpectedly listening to UNIX domain socket ${addr}`)
+  }
+  return `http://localhost:${addr.port}/ws`
+}
+
+const makeClient = () => new TestClient(wsUrl())
+
 describe('WebSocket protocol', () => {
   let alice: User
 
@@ -95,55 +109,15 @@ describe('WebSocket protocol', () => {
   )
 
   it('users can log in and create games', async () => {
+    const client = makeClient()
 
-    const responses: Record<string, p.ServerMessage> = {}
-    const events: Record<number, p.ServerGameNotification> = {}
-    const awaiters: Record<string, (res: p.ServerMessage) => void> = {}
-
-    const handler: jest.Mock<void, [WebSocket.Data]> = jest.fn(message => {
-      const json = JSON.parse(message.toString())
-      if (p.isServerResponse(json)) {
-        responses[json.requestId] = json
-        if (awaiters[json.requestId]) {
-          awaiters[json.requestId](json)
-          delete awaiters[json.requestId]
-        }
-      } else if (p.isServerGameNotification(json)) {
-        events[json.event.clock] = json
-      } else {
-        throw new Error('Unexpected response')
-      }
-    })
-
-    const response = async <T extends p.ServerMessage['type']>(requestId: string, type: T): Promise<p.ServerMessage & { type: T }> => {
-      let message: p.ServerMessage
-      if (responses[requestId]) {
-        message = responses[requestId]
-      } else {
-        message = await new Promise<p.ServerMessage>((resolve) => {
-          awaiters[requestId] = resolve
-        })
-      }
-      if (message.type !== type) {
-        throw new Error(`Expected ${type}, got ${message.type}`)
-      }
-      return message as any
-    }
-
-    const ws = await request(server).ws('/ws')
-
-    ws.on('message', handler)
-
-    const send = (req: p.ClientMessage) => ws.send(JSON.stringify(req))
-
-    send({
+    const login = await client.send({
       type: 'login',
       username: 'alice',
       password: 'password',
       requestId: 'login-req',
-    } as p.PlayerLoginRequest)
+    }, 'login')
 
-    const login = await response('login-req', 'login')
     expect(login).toEqual({
       type: 'login',
       requestId: 'login-req',
@@ -155,12 +129,12 @@ describe('WebSocket protocol', () => {
       }
     } as p.ServerLoginResponse)
 
-    send({
+    const getContents = await client.send({
       type: 'get',
       resource: ['contents'],
       requestId: 'get-contents-req'
-    })
-    const getContents = await response('get-contents-req', 'get')
+    }, 'get')
+
     expect(getContents).toEqual({
       type: 'get',
       requestId: 'get-contents-req',
@@ -168,13 +142,13 @@ describe('WebSocket protocol', () => {
       list: [defaultContentPreview],
     } as p.ServerGetContentListResponse)
 
-    send({
+    const createGame = await client.send({
       type: 'create-game',
       contentSets: [defaultContentPreview.id],
       name: 'my game',
       requestId: 'create-game-req'
-    } as p.PlayerCreateGameRequest)
-    const createGame = await response('create-game-req', 'create-game')
+    }, 'create-game')
+
     expect(createGame).toEqual(expect.objectContaining({
       type: 'create-game',
       requestId: 'create-game-req',
@@ -195,12 +169,12 @@ describe('WebSocket protocol', () => {
       })
     }) as p.ServerCreateGameResponse)
 
-    send({
+    const getSession = await client.send({
       type: 'get',
       resource: ['session'],
       requestId: 'get-session-req',
-    } as p.PlayerGetRequest)
-    const getSession = await response('get-session-req', 'get')
+    }, 'get')
+
     expect(getSession).toEqual({
       type: 'get',
       requestId: 'get-session-req',
@@ -214,6 +188,6 @@ describe('WebSocket protocol', () => {
         }
     } as p.ServerResponse)
 
-    ws.close()
+    client.close()
   })
 })
