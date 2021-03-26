@@ -115,7 +115,7 @@ class SocketServerImpl extends EventEmitter implements SocketServer {
   close(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.server.unref()
-      this.wss.close((err) => {
+      this.server.close((err) => {
         if (err) {
           reject(err)
         } else {
