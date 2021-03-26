@@ -5,7 +5,7 @@ export interface User {
   gameIds: string[]
   recentGame?: {
     id: string
-    timestamp: Date
+    timestamp: number
   }
 }
 

@@ -39,10 +39,10 @@ interface DerivedPassword {
 }
 
 const UserItem = {
-  id: String, // user:<random>
+  id: String,
   name: String,
   username: String,
-  gameIds: Optional(Array(String)),
+  gameIds: Optional({ values: Array(String) }),
 
   recentGameId: Optional(String),
   recentGameEpoch: Optional(Number),
@@ -55,11 +55,11 @@ function itemToUser(item: UserItem): User {
     id: item.id,
     name: item.name,
     username: item.username,
-    gameIds: item.gameIds || [],
+    gameIds: item.gameIds ? item.gameIds.values : [],
     ...(item.recentGameEpoch && item.recentGameId && {
       recentGame: {
         id: item.recentGameId,
-        timestamp: new Date(item.recentGameEpoch),
+        timestamp: item.recentGameEpoch,
       }
     }),
   }
@@ -183,6 +183,9 @@ export const DDBUsersService = inject(
     async function getUser(userId: string): Promise<UserItem | undefined> {
       const Key = userKey(userId)
       const { Item: user } = await client.get({ TableName, Key }).promise()
+      if (!user) {
+        return
+      }
       if (isUserItem(user)) {
         return user
       }

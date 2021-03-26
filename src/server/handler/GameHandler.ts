@@ -244,15 +244,7 @@ export const GameHandler = inject(
                 requestId,
                 session: {
                   currentGameId: session.gameId,
-                  gameIds: user.gameIds,
-                  name: user.name,
-                  username: user.username,
-                   ...(user.recentGame && {
-                    recent: {
-                      gameId: user.recentGame.id,
-                      timestamp: user.recentGame.timestamp.valueOf(),
-                    }
-                  }),
+                  ...user,
                 }
               })
               return

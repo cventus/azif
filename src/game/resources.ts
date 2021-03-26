@@ -72,8 +72,8 @@ export const SessionState = {
   username: String,
   gameIds: Array(String),
   currentGameId: Union(String, Literal(null)),
-  recent: Optional({
-    gameId: String,
+  recentGame: Optional({
+    id: String,
     timestamp: EpochMs,
   }),
 }
