@@ -65,6 +65,15 @@ export const GameActionsHandler = inject(
           states.setCardFacing(gameId, action.card, action.facing),
         )
 
+      case 'switch-character':
+        const update = states.switchCharacter(
+          gameId,
+          userId,
+          action.oldCharacter,
+          action.newCharacter,
+        )
+        return writeEvent(action, update)
+
       case 'chat':
         if (action.text.length > MAX_CHAT) {
           return Failure

@@ -1,6 +1,5 @@
 import request from 'superwstest'
 import http from 'http'
-import WebSocket from 'ws'
 
 import { assemble, inject } from '../src/inject'
 import { TestModule } from '../src/server/ddb/TestClient'
@@ -8,14 +7,16 @@ import { AppServices } from '../src/server/main'
 import { SocketServer, SocketServerConfig } from '../src/server/sockets/SocketServer'
 import { User } from '../src/server/users'
 import { UsersService } from '../src/server/users/UsersService'
+import { ContentSet, ContentSetPreview } from '../src/game/resources'
+import { GamesService } from '../src/server/games/GamesService'
 
 import * as p from '../src/game/protocol'
-import { ContentSet, ContentSetPreview, GameState } from '../src/game/resources'
 import { TestClient } from './TestClient'
 
 let socketServer: SocketServer
 let server: http.Server
 let users: UsersService
+let games: GamesService
 let cleanup: () => Promise<void>
 
 const defaultContentPreview: ContentSetPreview = {
@@ -49,6 +50,7 @@ beforeAll(async () => {
   })
   socketServer = app.get('SocketServer')
   users = app.get('UsersService')
+  games = app.get('GamesService')
   server = socketServer.server
   cleanup = () => app.destroy()
 
@@ -76,15 +78,21 @@ const makeClient = () => new TestClient(wsUrl())
 
 describe('WebSocket protocol', () => {
   let alice: User
+  let bob: User
 
   beforeEach(async () => {
     alice = await users.createUser('Alice', {
       username: 'alice',
       password: 'password',
     })
+    bob = await users.createUser('Bob', {
+      username: 'bob',
+      password: 'password',
+    })
   })
   afterEach(async () => {
     await users.removeUser(alice.id)
+    await users.removeUser(bob.id)
   })
 
   it('users can log', () =>
@@ -106,6 +114,8 @@ describe('WebSocket protocol', () => {
           username: 'alice',
         }
       } as p.ServerLoginResponse)
+      .close()
+      .expectClosed()
   )
 
   it('users can log in and create games', async () => {
@@ -189,5 +199,90 @@ describe('WebSocket protocol', () => {
     } as p.ServerResponse)
 
     client.close()
+  })
+
+  it("users are notified of one another's game events", async () => {
+    const aliceClient = makeClient()
+    const bobClient = makeClient()
+
+    const game = await games.createGame('some game', [defaultContent.id])
+    await games.addPlayer(game.id, alice.id)
+    await games.addPlayer(game.id, bob.id)
+
+    await aliceClient.send({
+      type: 'login',
+      username: 'alice',
+      password: 'password',
+      requestId: 'login-req',
+    }, 'login')
+    await aliceClient.send({
+      type: 'subscribe-to-game',
+      gameId: game.id,
+      requestId: 'subscribe',
+    }, 'success')
+
+    await bobClient.send({
+      type: 'login',
+      username: 'bob',
+      password: 'password',
+      requestId: 'login-req',
+    }, 'login')
+    await bobClient.send({
+      type: 'subscribe-to-game',
+      gameId: game.id,
+      requestId: 'subscribe',
+    }, 'success')
+
+    await aliceClient.send({
+      type: 'action',
+      requestId: 'action-1',
+      action: {
+        type: 'switch-character',
+        playerId: alice.id,
+        oldCharacter: null,
+        newCharacter: 'ch-1',
+      }
+    }, 'game-update')
+
+    await bobClient.send({
+      type: 'action',
+      requestId: 'action-2',
+      action: {
+        type: 'switch-character',
+        playerId: bob.id,
+        oldCharacter: null,
+        newCharacter: 'ch-2',
+      }
+    }, 'game-update')
+
+    const response = await aliceClient.send({
+      type: 'action',
+      requestId: 'action-3',
+      action: {
+        type: 'dice',
+        roll: [null, null, null],
+      }
+    }, 'game-update')
+
+    await aliceClient.receiveNotification(response.game.clock)
+    await bobClient.receiveNotification(response.game.clock)
+
+    expect(aliceClient.events).toEqual(bobClient.events)
+    expect(aliceClient.events).toEqual(
+      expect.objectContaining({
+        [response.game.clock]: expect.objectContaining({
+          type: 'game-event',
+          event: expect.objectContaining({ action: expect.objectContaining({ type: 'dice' }) })
+        }),
+        [response.game.clock - 1]: expect.objectContaining({
+          type: 'game-event',
+          event: expect.objectContaining({ action: expect.objectContaining({ type: 'switch-character' }) })
+        }),
+        [response.game.clock - 2]: expect.objectContaining({
+          type: 'game-event',
+          event: expect.objectContaining({ action: expect.objectContaining({ type: 'switch-character' }) })
+        }),
+      })
+    )
   })
 })

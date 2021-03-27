@@ -10,9 +10,10 @@ import {
 } from '../src/game/protocol'
 
 export class TestClient {
-  private responses: Record<string, ServerMessage>
-  private events: Record<number, ServerGameNotification>
+  public responses: Record<string, ServerMessage>
+  public events: Record<number, ServerGameNotification>
   private requestAwaiters: Record<string, (res: ServerMessage) => void>
+  private eventAwaiters: Record<number, (res: ServerGameNotification) => void>
   private ws: WebSocket
   private awaitOpen: Promise<void>
 
@@ -20,6 +21,7 @@ export class TestClient {
     this.responses = {}
     this.events = {}
     this.requestAwaiters = {}
+    this.eventAwaiters = {}
     this.ws = new WebSocket(url)
 
     let onOpen: () => void
@@ -37,13 +39,17 @@ export class TestClient {
         }
       } else if (isServerGameNotification(json)) {
         this.events[json.event.clock] = json
+        if (this.eventAwaiters[json.event.clock]) {
+          this.eventAwaiters[json.event.clock](json)
+          delete this.eventAwaiters[json.event.clock]
+        }
       } else {
         throw new Error('Unexpected response')
       }
     })
   }
 
-  public async response(requestId: string): Promise<ServerResponse> {
+  private async receive(requestId: string): Promise<ServerResponse> {
     let message: ServerMessage
     if (this.responses[requestId]) {
       message = this.responses[requestId]
@@ -55,9 +61,23 @@ export class TestClient {
     return message
   }
 
+  public async receiveNotification(clock: number): Promise<ServerGameNotification> {
+    let message: ServerGameNotification
+    if (this.events[clock]) {
+      message = this.events[clock]
+    } else {
+      message = await new Promise<ServerGameNotification>((resolve) => {
+        this.eventAwaiters[clock] = resolve
+      })
+    }
+    return message
+  }
+
+
+
   public async send<T extends ServerMessage['type']>(
     message: ClientMessage,
-    type: T,
+    type?: T,
   ): Promise<ServerResponse & { type: T }> {
     await this.awaitOpen
     this.ws.send(JSON.stringify(message))
@@ -67,9 +87,9 @@ export class TestClient {
           reject(new Error(`Request ${message.requestId} timed out after 1s`))
         }, 1000)
       ),
-      this.response(message.requestId),
+      this.receive(message.requestId),
     ])
-    if (response.type === type) {
+    if (!type || response.type === type) {
       return response as ServerMessage & { type: T }
     }
     throw new Error(`Expected response message ${type}, got ${response.type}`)

@@ -7,6 +7,7 @@ import {
   FlipCardAction,
   RemoveConditionAction,
   SetConditionAction,
+  SwitchCharacterAction,
   TradeCardAction,
 } from './actions'
 import { DieRoll } from './dice'
@@ -21,6 +22,7 @@ export type DicePlayerAction = StructureType<typeof DicePlayerAction>
 const PlayerAction = Union(
   ChatAction,
   DicePlayerAction,
+  SwitchCharacterAction,
   DrawCardAction,
   SetConditionAction,
   RemoveConditionAction,
@@ -146,6 +148,13 @@ const ServerCreateGameResponse = {
 }
 export type ServerCreateGameResponse = StructureType<typeof ServerCreateGameResponse>
 
+const ServerGameUpdateResponse = {
+  type: Literal('game-update'),
+  requestId: String,
+  game: GameState,
+}
+export type ServerGameUpdateResponse = StructureType<typeof ServerGameUpdateResponse>
+
 const ServerGetGameResponse = {
   type: Literal('get'),
   resource: Tuple(Literal('games'), String),
@@ -180,6 +189,7 @@ const ServerResponse = Union(
   ServerFailureResponse,
   ServerLoginResponse,
   ServerCreateGameResponse,
+  ServerGameUpdateResponse,
   ServerGetGameResponse,
   ServerGetProfileResponse,
   ServerGetContentResponse,

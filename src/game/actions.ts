@@ -30,6 +30,14 @@ export const RemovePlayerAction = {
 }
 export type RemovePlayerAction = StructureType<typeof RemovePlayerAction>
 
+export const SwitchCharacterAction = {
+  type: Literal('switch-character'),
+  playerId: String,
+  newCharacter: String,
+  oldCharacter: Union(String, Literal(null)),
+}
+export type SwitchCharacterAction = StructureType<typeof SwitchCharacterAction>
+
 export const SetConditionAction = {
   type: Literal('set-condition'),
   character: String,
@@ -83,6 +91,7 @@ export const GameAction = Union(
   DiceAction,
   AddPlayerAction,
   RemovePlayerAction,
+  SwitchCharacterAction,
   DrawCardAction,
   SetConditionAction,
   RemoveConditionAction,

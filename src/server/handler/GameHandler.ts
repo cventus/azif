@@ -329,7 +329,11 @@ export const GameHandler = inject(
             return sendFail(socketId, message, 'game-action-failed')
           }
           return Promise.all([
-            sendOk(socketId, message),
+            send(socketId, {
+              type: 'game-update',
+              game: await makeGame(result.state),
+              requestId: message.requestId,
+            }),
             broadcast(result.state, result.event),
           ])
         }
