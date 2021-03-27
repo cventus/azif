@@ -22,6 +22,11 @@ export function expressionNames(...names: string[]): Record<string, string> {
   )
 }
 
+export const ttl = (ttl: number): number => {
+  const epoch = new Date().valueOf() / 1000
+  return Math.ceil(epoch + Math.max(ttl, 0))
+}
+
 export interface Page<Item, Token> {
   results: Item[]
   token?: Token

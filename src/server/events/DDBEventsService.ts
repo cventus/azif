@@ -1,9 +1,21 @@
 import { isGameEvent } from '../../game/resources'
 import { inject } from '../../inject'
+import { expressionNames, ttl } from '../ddb'
 import { DocumentClient } from '../ddb/DocumentClient'
 import { TableConfig } from '../ddb/TableConfig'
 import { LoggerService } from '../logger/LoggerService'
 import { EventsService } from './EventsService'
+
+// 3 months in seconds
+const EventTTL: number = 3 * 30 * 24 * 60 * 60
+const ProjectionExpression = '#gameId, #clock, #playerId, #epoch, #action'
+const ExpressionAttributeNames = expressionNames(
+  'gameId',
+  'clock',
+  'playerId',
+  'epoch',
+  'action',
+)
 
 export const DDBEventsService = inject(
   { DocumentClient, TableConfig, LoggerService },
@@ -17,6 +29,8 @@ export const DDBEventsService = inject(
         async get(gameId, clock) {
           const { Item: item } = await client
             .get({
+              ProjectionExpression,
+              ExpressionAttributeNames,
               Key: { gameId, clock },
               TableName,
             })
@@ -47,13 +61,17 @@ export const DDBEventsService = inject(
           const { Items: items } = await client
             .query({
               TableName,
+              ProjectionExpression,
               ConsistentRead: options.since === undefined,
               Limit: 20,
               KeyConditionExpression: [
                 '#gameId = :gameId',
                 ...expressions,
               ].join(' and '),
-              ExpressionAttributeNames: { '#gameId': 'gameId', ...queryNames },
+              ExpressionAttributeNames: {
+                ...ExpressionAttributeNames,
+                ...queryNames,
+              },
               ExpressionAttributeValues: { ':gameId': gameId, ...queryValues },
               ScanIndexForward: false, // from most recent to older
             })
@@ -72,7 +90,7 @@ export const DDBEventsService = inject(
         async write(event) {
           await client
             .put({
-              Item: event,
+              Item: { ...event, ttl: ttl(EventTTL) },
               TableName,
               ConditionExpression: 'attribute_not_exists(gameId)',
             })

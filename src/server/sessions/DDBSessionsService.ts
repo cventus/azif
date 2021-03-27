@@ -1,5 +1,6 @@
 import { inject } from '../../inject'
 import { Literal, Union, validate } from '../../structure'
+import { ttl } from '../ddb'
 
 import { DocumentClient } from '../ddb/DocumentClient'
 import { TableConfig } from '../ddb/TableConfig'
@@ -22,6 +23,9 @@ const SocketListItem = {
 }
 const isSocketListItem = validate(SocketListItem)
 
+// API Gateway sockets time-out after 2 hours
+const SessionTTL: number = 2.25 * 60 * 60
+
 export const DDBSessionsService = inject(
   { DocumentClient, TableConfig, LoggerService },
   ({ DocumentClient: client, TableConfig, LoggerService }): SessionsService => {
@@ -29,13 +33,6 @@ export const DDBSessionsService = inject(
 
     const ItemTableName = TableConfig.tables.sessions
     const ListTableName = TableConfig.tables.gameSessions
-
-    const ttl = () => {
-      const epoch = Math.floor(new Date().valueOf() / 1000)
-      // API Gateway sockets time-out after 2 hours
-      const twoishHours = 2.25 * 60 * 60
-      return epoch + twoishHours
-    }
 
     return LoggerService.traceMethods(logger, {
       async removeSession(socketId, gameId) {
@@ -172,7 +169,7 @@ export const DDBSessionsService = inject(
       async createSession(socketId, userId) {
         await client
           .put({
-            Item: { id: `socket:${socketId}`, userId, gameId: null, ttl: ttl() },
+            Item: { id: `socket:${socketId}`, userId, gameId: null, ttl: ttl(SessionTTL) },
             TableName: ItemTableName,
             ConditionExpression: 'attribute_not_exists(id)',
           })
