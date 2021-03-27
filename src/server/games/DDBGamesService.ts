@@ -21,6 +21,7 @@ import {
   expressionNames,
   isFailedConditionalCheck,
   isTransactionCanceled,
+  ttl,
 } from '../ddb'
 import { generateId } from '../generateId'
 import DynamoDB from 'aws-sdk/clients/dynamodb'
@@ -125,6 +126,9 @@ const toGameState = (
 const gameKey = (gameId: string) => ({ id: gameId })
 const and = (...conditions: string[]): string => conditions.join(' and ')
 
+// Keep game alive for three months after the last (successful) action
+const GameTTL: number = 3 * 30 * 24 * 60 * 60
+
 export const GameTableActions = (TableName: string) => ({
   createGame(gameId: string, name: string, sets: DynamoDbSet): Put {
     return {
@@ -140,6 +144,7 @@ export const GameTableActions = (TableName: string) => ({
         clues: {},
         conditions: {},
         cards: {},
+        ttl: ttl(GameTTL),
       },
       ConditionExpression: 'attribute_not_exists(id)', // very unlikely ID clash
     }
@@ -148,12 +153,13 @@ export const GameTableActions = (TableName: string) => ({
     return {
       TableName,
       Key: gameKey(gameId),
-      UpdateExpression: 'SET #phase = :ongoing ADD #clock :1',
-      ExpressionAttributeNames: expressionNames('id', 'phase', 'clock'),
+      UpdateExpression: 'SET #phase = :ongoing, #ttl = :ttl ADD #clock :1',
+      ExpressionAttributeNames: expressionNames('id', 'phase', 'clock', 'ttl'),
       ExpressionAttributeValues: {
         ':1': 1,
         ':starting': Phases.Starting,
         ':ongoing': Phases.Ongoing,
+        ':ttl': ttl(GameTTL),
       },
       ConditionExpression: and('attribute_exists(#id)', '#phase = :starting'),
     }
@@ -162,9 +168,13 @@ export const GameTableActions = (TableName: string) => ({
     return {
       TableName,
       Key: gameKey(gameId),
-      UpdateExpression: 'SET #phase = :over ADD #clock :1',
-      ExpressionAttributeNames: expressionNames('id', 'phase', 'clock'),
-      ExpressionAttributeValues: { ':1': 1, ':over': Phases.Over },
+      UpdateExpression: 'SET #phase = :over, #ttl = :ttl ADD #clock :1',
+      ExpressionAttributeNames: expressionNames('id', 'phase', 'clock', 'ttl'),
+      ExpressionAttributeValues: {
+        ':1': 1,
+        ':over': Phases.Over,
+        ':ttl': ttl(GameTTL),
+      },
       ConditionExpression: and('attribute_exists(#id)', '#phase <> :over'),
     }
   },
@@ -172,15 +182,16 @@ export const GameTableActions = (TableName: string) => ({
     return {
       TableName,
       Key: gameKey(gameId),
-      UpdateExpression: 'SET #cards.#card = :char ADD #clock :1',
+      UpdateExpression: 'SET #cards.#card = :char, #ttl = :ttl ADD #clock :1',
       ExpressionAttributeNames: {
         '#card': cardId,
-        ...expressionNames('id', 'phase', 'cards', 'clock'),
+        ...expressionNames('id', 'phase', 'cards', 'clock', 'ttl'),
       },
       ExpressionAttributeValues: {
         ':char': characterId,
         ':ongoing': Phases.Ongoing,
         ':1': 1,
+        ':ttl': ttl(GameTTL),
       },
       ConditionExpression: and(
         'attribute_exists(#id)',
@@ -198,16 +209,17 @@ export const GameTableActions = (TableName: string) => ({
     return {
       TableName,
       Key: gameKey(gameId),
-      UpdateExpression: 'SET #cards.#card = :to ADD #clock :1',
+      UpdateExpression: 'SET #cards.#card = :to, #ttl = :ttl ADD #clock :1',
       ExpressionAttributeNames: {
         '#card': cardId,
-        ...expressionNames('id', 'phase', 'cards', 'clock'),
+        ...expressionNames('id', 'phase', 'cards', 'clock', 'ttl'),
       },
       ExpressionAttributeValues: {
         ':to': toCharacterId,
         ':from': fromCharacterId,
         ':ongoing': Phases.Ongoing,
         ':1': 1,
+        ':ttl': ttl(GameTTL),
       },
       ConditionExpression: and(
         'attribute_exists(#id)',
@@ -221,12 +233,16 @@ export const GameTableActions = (TableName: string) => ({
     return {
       TableName,
       Key: gameKey(gameId),
-      UpdateExpression: 'REMOVE #cards.#card ADD #clock :1',
+      UpdateExpression: 'REMOVE #cards.#card ADD #clock :1 SET #ttl = :ttl',
       ExpressionAttributeNames: {
         '#card': cardId,
-        ...expressionNames('id', 'phase', 'cards', 'clock'),
+        ...expressionNames('id', 'phase', 'cards', 'clock', 'ttl'),
       },
-      ExpressionAttributeValues: { ':ongoing': Phases.Ongoing, ':1': 1 },
+      ExpressionAttributeValues: {
+        ':ongoing': Phases.Ongoing,
+        ':1': 1,
+        ':ttl': ttl(GameTTL),
+      },
       ConditionExpression: and(
         'attribute_exists(#id)',
         'attribute_exists(#cards.#card)',
@@ -245,19 +261,21 @@ export const GameTableActions = (TableName: string) => ({
       Key: gameKey(gameId),
       UpdateExpression:
         action === 'add'
-          ? 'ADD #flips :c, #clock :1'
-          : 'DELETE #flips :c ADD #clock :1',
+          ? 'ADD #flips :c, #clock :1 SET #ttl = :ttl'
+          : 'DELETE #flips :c ADD #clock :1 SET #ttl = :ttl',
       ExpressionAttributeNames: expressionNames(
         'id',
         'flips',
         'phase',
         'clock',
+        'ttl',
       ),
       ExpressionAttributeValues: {
         ':c': cardIdSet,
         ':cid': cardId,
         ':ongoing': Phases.Ongoing,
         ':1': 1,
+        ':ttl': ttl(GameTTL),
       },
       ConditionExpression: and(
         'attribute_exists(#id)',
@@ -273,15 +291,17 @@ export const GameTableActions = (TableName: string) => ({
     return {
       TableName,
       Key: gameKey(gameId),
-      UpdateExpression: 'SET #clues.#c = #clues.#c + :c ADD #clock :1',
+      UpdateExpression:
+        'SET #clues.#c = #clues.#c + :c, #ttl = :ttl ADD #clock :1',
       ExpressionAttributeNames: {
         '#c': characterId,
-        ...expressionNames('id', 'clues', 'phase', 'clock'),
+        ...expressionNames('id', 'clues', 'phase', 'clock', 'ttl'),
       },
       ExpressionAttributeValues: {
         ':c': delta,
         ':ongoing': Phases.Ongoing,
         ':1': 1,
+        ':ttl': ttl(GameTTL),
       },
       ConditionExpression: and('attribute_exists(#id)', '#phase = :ongoing'),
     }
@@ -294,16 +314,25 @@ export const GameTableActions = (TableName: string) => ({
     return {
       TableName,
       Key: gameKey(gameId),
-      UpdateExpression: 'ADD #conditions.#characterId :conditionIds, #clock :1',
+      UpdateExpression:
+        'ADD #conditions.#characterId :conditionIds, #clock :1 SET #ttl = :ttl',
       ExpressionAttributeNames: {
         '#characterId': characterId,
-        ...expressionNames('id', 'clues', 'phase', 'conditions', 'clock'),
+        ...expressionNames(
+          'id',
+          'clues',
+          'phase',
+          'conditions',
+          'clock',
+          'ttl',
+        ),
       },
       ExpressionAttributeValues: {
         ':conditionIds': conditionIds,
         ':conditionId': conditionIds.values[0],
         ':ongoing': Phases.Ongoing,
         ':1': 1,
+        ':ttl': ttl(GameTTL),
       },
       ConditionExpression: and(
         'attribute_exists(#id)',
@@ -322,16 +351,17 @@ export const GameTableActions = (TableName: string) => ({
       TableName,
       Key: gameKey(gameId),
       UpdateExpression:
-        'DELETE #conditions.#characterId :conditionIds ADD #clock :1',
+        'DELETE #conditions.#characterId :conditionIds ADD #clock :1 SET #ttl = :ttl',
       ExpressionAttributeNames: {
         '#characterId': characterId,
-        ...expressionNames('id', 'phase', 'conditions', 'clock'),
+        ...expressionNames('id', 'phase', 'conditions', 'clock', 'ttl'),
       },
       ExpressionAttributeValues: {
         ':conditionIds': conditionIds,
         ':conditionId': conditionIds.values[0],
         ':ongoing': Phases.Ongoing,
         ':1': 1,
+        ':ttl': ttl(GameTTL),
       },
       ConditionExpression: and(
         'attribute_exists(#id)',
@@ -344,10 +374,10 @@ export const GameTableActions = (TableName: string) => ({
     return {
       TableName,
       Key: gameKey(gameId),
-      UpdateExpression: 'SET #players.#p = :p, #clock = :clock',
+      UpdateExpression: 'SET #players.#p = :p, #clock = :clock, #ttl = :ttl',
       ExpressionAttributeNames: {
         '#p': userId,
-        ...expressionNames('id', 'players', 'phase', 'clock'),
+        ...expressionNames('id', 'players', 'phase', 'clock', 'ttl'),
       },
       ExpressionAttributeValues: {
         ':p': null,
@@ -355,6 +385,7 @@ export const GameTableActions = (TableName: string) => ({
         ':oldclock': clock,
         ':max': MaxPlayers,
         ':over': Phases.Over,
+        ':ttl': ttl(GameTTL),
       },
       ConditionExpression: and(
         'attribute_exists(#id)',
@@ -369,12 +400,17 @@ export const GameTableActions = (TableName: string) => ({
     return {
       TableName,
       Key: gameKey(gameId),
-      UpdateExpression: 'REMOVE #players.#p SET #clock = :newclock',
+      UpdateExpression:
+        'REMOVE #players.#p SET #clock = :newclock, #ttl = :ttl',
       ExpressionAttributeNames: {
         '#p': userId,
-        ...expressionNames('id', 'clock', 'players'),
+        ...expressionNames('id', 'clock', 'players', 'ttl'),
       },
-      ExpressionAttributeValues: { ':oldclock': clock, ':newclock': clock + 1 },
+      ExpressionAttributeValues: {
+        ':oldclock': clock,
+        ':newclock': clock + 1,
+        ':ttl': ttl(GameTTL),
+      },
       ConditionExpression: and(
         'attribute_exists(#id)',
         'attribute_exists(#players.#p)',
@@ -395,12 +431,12 @@ export const GameTableActions = (TableName: string) => ({
         TableName,
         Key: gameKey(gameId),
         UpdateExpression:
-          'SET #players.#p = :to, #clues.#to = :c REMOVE #clues.#from ADD #clock :1',
+          'SET #players.#p = :to, #clues.#to = :c, #ttl = :ttl REMOVE #clues.#from ADD #clock :1',
         ExpressionAttributeNames: {
           '#p': userId,
           '#from': previousCharacterId,
           '#to': characterId,
-          ...expressionNames('id', 'clock', 'players', 'clues', 'phase'),
+          ...expressionNames('id', 'clock', 'players', 'clues', 'phase', 'ttl'),
         },
         ExpressionAttributeValues: {
           ':c': DefaultClues,
@@ -408,6 +444,7 @@ export const GameTableActions = (TableName: string) => ({
           ':to': characterId,
           ':starting': Phases.Starting,
           ':1': 1,
+          ':ttl': ttl(GameTTL),
         },
         ConditionExpression: and(
           'attribute_exists(#id)',
@@ -423,17 +460,18 @@ export const GameTableActions = (TableName: string) => ({
         TableName,
         Key: gameKey(gameId),
         UpdateExpression:
-          'SET #players.#p = :to, #clues.#to = :c ADD #clock :1',
+          'SET #players.#p = :to, #clues.#to = :c, #ttl = :ttl ADD #clock :1',
         ExpressionAttributeNames: {
           '#p': userId,
           '#to': characterId,
-          ...expressionNames('id', 'clock', 'players', 'clues', 'phase'),
+          ...expressionNames('id', 'clock', 'players', 'clues', 'phase', 'ttl'),
         },
         ExpressionAttributeValues: {
           ':c': DefaultClues,
           ':to': characterId,
           ':starting': Phases.Starting,
           ':1': 1,
+          ':ttl': ttl(GameTTL),
         },
         ConditionExpression: and(
           'attribute_exists(#id)',
@@ -448,9 +486,13 @@ export const GameTableActions = (TableName: string) => ({
     return {
       TableName,
       Key: gameKey(gameId),
-      UpdateExpression: 'SET #clock = #clock + :1',
-      ExpressionAttributeNames: expressionNames('id', 'phase', 'clock'),
-      ExpressionAttributeValues: { ':1': 1, ':over': Phases.Over },
+      UpdateExpression: 'SET #clock = #clock + :1, #ttl = :ttl',
+      ExpressionAttributeNames: expressionNames('id', 'phase', 'clock', 'ttl'),
+      ExpressionAttributeValues: {
+        ':1': 1,
+        ':over': Phases.Over,
+        ':ttl': ttl(GameTTL),
+      },
       ConditionExpression: and('attribute_exists(#id)', '#phase <> :over'),
     }
   },
