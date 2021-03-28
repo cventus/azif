@@ -113,7 +113,7 @@ describe('WebSocket protocol', () => {
           name: 'Alice',
           username: 'alice',
         }
-      } as p.ServerLoginResponse)
+      })
       .close()
       .expectClosed()
   )

@@ -9,14 +9,8 @@ interface GameEventsContainerProps {
 const Hours = (props: { date: Date }) => {
   const { date } = props
 
-  let hours = date.getHours().toString()
-  if (hours.length === 1) {
-    hours = '0' + hours
-  }
-  let minutes = date.getMinutes().toString()
-  if (minutes.length === 1) {
-    minutes = '0' + minutes
-  }
+  let hours = date.getHours().toString().padStart(2, '0')
+  let minutes = date.getMinutes().toString().padStart(2, '0')
 
   return <>{`${hours}:${minutes}`}</>
 }
@@ -28,9 +22,9 @@ const GameEventRow = (props: { gameEvent: DatedMessage }) => {
     <div>
       <Hours date={gameEvent.date} />
       &nbsp;
-      <span>{gameEvent.type}</span>
+      <span>{gameEvent.action.type}</span>
       &nbsp;
-      {gameEvent.type === 'chat' && <span>{gameEvent.text}</span>}
+      {gameEvent.action.type === 'chat' && <span>{gameEvent.action.text}</span>}
     </div>
   )
 }
@@ -49,7 +43,8 @@ export const GameEventsContainer: React.FC<GameEventsContainerProps> = ({}) => {
         if (text.length > 0) {
           dispatch(
             connection.clientMessage({
-              type: 'player-action',
+              type: 'action',
+              requestId: 'my-req',
               action: {
                 type: 'chat',
                 text,
@@ -73,7 +68,7 @@ export const GameEventsContainer: React.FC<GameEventsContainerProps> = ({}) => {
       <div>
         {gameEvents.reduceRight((acc, current) => {
           acc.push(
-            <GameEventRow key={current.eventId} gameEvent={current} />,
+            <GameEventRow key={current.clock} gameEvent={current} />,
           )
           return acc
         }, [] as JSX.Element[])}
