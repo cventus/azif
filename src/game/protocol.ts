@@ -79,7 +79,7 @@ export type PlayerLeaveGameRequest = StructureType<typeof PlayerLeaveGameRequest
 const PlayerSubscribeToGameRequest = {
   type: Literal('subscribe-to-game'),
   requestId: String,
-  gameId: String,
+  gameId: Union(String, Literal(null)),
 }
 export type PlayerSubscribeToGameRequest = StructureType<typeof PlayerSubscribeToGameRequest>
 
@@ -97,7 +97,34 @@ const PlayerGetRequest = {
 }
 export type PlayerGetRequest = StructureType<typeof PlayerGetRequest>
 
+const PlayerSetUsernameRequest = {
+  type: Literal('set-username'),
+  requestId: String,
+  newUsername: String,
+  currentPassword: String,
+}
+export type PlayerSetUsernameRequest = StructureType<typeof PlayerSetUsernameRequest>
+
+const PlayerSetPasswordRequest = {
+  type: Literal('set-password'),
+  requestId: String,
+  currentPassword: String,
+  newPassword: String,
+}
+export type PlayerSetPasswordRequest = StructureType<typeof PlayerSetPasswordRequest>
+
+const PlayerSetNameRequest = {
+  type: Literal('set-name'),
+  requestId: String,
+  currentPassword: String,
+  newName: String,
+}
+export type PlayerSetNameRequest = StructureType<typeof PlayerSetNameRequest>
+
 const ClientMessage = Union(
+  PlayerSetUsernameRequest,
+  PlayerSetPasswordRequest,
+  PlayerSetNameRequest,
   PlayerLoginRequest,
   PlayerLogoutRequest,
   PlayerCreateGameRequest,
@@ -195,7 +222,7 @@ const ServerResponse = Union(
   ServerGetContentResponse,
   ServerGetContentListResponse,
 )
-export type ServerResponse = StructureType<typeof ServerMessage>
+export type ServerResponse = StructureType<typeof ServerResponse>
 export const isServerResponse = validate(ServerResponse)
 
 const ServerMessage = Union(

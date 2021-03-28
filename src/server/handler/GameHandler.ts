@@ -4,18 +4,25 @@ import {
   isClientMessage,
   ServerMessage,
   ServerLoginResponse,
+  ServerResponse,
+  ServerFailureResponse,
+  ServerSuccessResponse,
 } from '../../game/protocol'
 import { inject } from '../../inject'
 import { validate } from '../../structure'
 
 import { SessionsService, SocketSession } from '../sessions/SessionsService'
 import { GameActionsHandler } from '../games/GameActionsHandler'
-import { GamesService, makeGameState, PartialGameState } from '../games/GamesService'
+import {
+  GamesService,
+  makeGameState,
+  PartialGameState,
+} from '../games/GamesService'
 import { LoggerService } from '../logger/LoggerService'
 import { SocketsService } from '../sockets/SocketsService'
 import { User } from '../users'
 import { UsersService } from '../users/UsersService'
-import { ContentSet, GameEvent, GameState } from '../../game/resources'
+import { ContentSet, GameState } from '../../game/resources'
 import { ContentService } from '../content/ContentService'
 
 interface SocketConnectEvent {
@@ -68,20 +75,19 @@ export const GameHandler = inject(
       await sockets.send(socketId, response)
     }
 
-    const sendOk = (socketId: string, message: ClientMessage) => {
-      return send(socketId, { type: 'success', requestId: message.requestId })
-    }
-
-    const sendFail = (
-      socketId: string,
+    const failure = (
       message: ClientMessage,
       reason: string,
-    ) => {
-      return send(socketId, {
+    ): ServerFailureResponse => {
+      return {
         type: 'failure',
         requestId: message.requestId,
         message: reason,
-      })
+      }
+    }
+
+    const success = (message: ClientMessage): ServerSuccessResponse => {
+      return { type: 'success', requestId: message.requestId }
     }
 
     const makeGame = async (game: PartialGameState): Promise<GameState> => {
@@ -94,37 +100,86 @@ export const GameHandler = inject(
       )
     }
 
-    const broadcast = async (
-      game: PartialGameState,
-      event: GameEvent,
+    const broadcastGameEvent = async (
+      notification: ServerGameNotification,
     ): Promise<void> => {
-      const playerSessions = await sessions.getGameSessions(game.id)
-      const gameState = await makeGame(game)
-      const notification: ServerGameNotification = {
-        type: 'game-event',
-        event: event,
-        game: gameState,
-      }
+      const playerSessions = await sessions.getGameSessions(
+        notification.game.id,
+      )
       const socketIds = playerSessions.map(({ socketId }) => socketId)
-      await Promise.all(socketIds.map((socketId) => send(socketId, notification)))
+      await Promise.all(
+        socketIds.map((socketId) => send(socketId, notification)),
+      )
     }
 
     const onClientMessage = async (
       socketId: string,
       message: ClientMessage,
       session: SocketSession,
-    ) => {
+    ): Promise<ServerResponse | [ServerResponse, ServerGameNotification]> => {
       switch (message.type) {
         case 'login': {
           // Forbidden, must disconnect first
-          await sendFail(socketId, message, 'already-authenticated')
-          break
+          return failure(message, 'already-authenticated')
         }
 
         case 'logout': {
           await sessions.removeSession(socketId)
-          await sendOk(socketId, message)
-          break
+          return success(message)
+        }
+
+        case 'set-name': {
+          const user = await users.get(session.userId)
+          if (!user) {
+            logger.error(
+              { userId: session.userId },
+              'Authenticated user not found',
+            )
+            return failure(message, 'system-inconsistency')
+          }
+          if (
+            !(await users.authenticate(user.username, message.currentPassword))
+          ) {
+            return failure(message, 'bad-auth')
+          }
+          await users.setUsername(session.userId, message.newName)
+          return success(message)
+        }
+
+        case 'set-password': {
+          const user = await users.get(session.userId)
+          if (!user) {
+            logger.error(
+              { userId: session.userId },
+              'Authenticated user not found',
+            )
+            return failure(message, 'system-inconsistency')
+          }
+          if (
+            !(await users.authenticate(user.username, message.currentPassword))
+          ) {
+            return failure(message, 'bad-auth')
+          }
+          await users.setPassword(session.userId, message.newPassword)
+          return success(message)
+        }
+
+        case 'set-username': {
+          const user = await users.get(session.userId)
+          if (!user) {
+            logger.error(
+              { userId: session.userId },
+              'Authenticated user not found',
+            )
+            return failure(message, 'system-inconsistency')
+          }
+          if (
+            !(await users.authenticate(user.username, message.currentPassword))
+          ) {
+            return failure(message, 'bad-auth')
+          }
+          await users.setUsername(session.userId, message.newUsername)
+          return success(message)
         }
 
         case 'create-game': {
@@ -132,15 +187,13 @@ export const GameHandler = inject(
           const newGame = await games.createGame(name, contentSets)
           const game = await games.addPlayer(newGame.id, session.userId)
           if (game === 'failure') {
-            sendFail(socketId, message, 'failed')
-            return
+            return failure(message, 'sorry')
           }
-          await send(socketId, {
+          return {
             type: 'create-game',
             requestId: message.requestId,
             game: await makeGame(game),
-          })
-          break;
+          }
         }
 
         case 'join-game': {
@@ -148,19 +201,23 @@ export const GameHandler = inject(
           const user = await users.get(session.userId)
 
           if (!user) {
-            logger.error({ userId: session.userId }, 'Authenticated user not found')
-            return sendFail(socketId, message, 'system-inconsistency')
+            logger.error(
+              { userId: session.userId },
+              'Authenticated user not found',
+            )
+            return failure(message, 'system-inconsistency')
           }
 
           const result = await games.addPlayer(gameId, session.userId)
           if (result === 'failure') {
-            return sendFail(socketId, message, 'too-bad')
+            return failure(message, 'unable-to-add-player')
           }
-          await Promise.all([
-            sendOk(socketId, message),
-            broadcast(
-              result,
-              {
+
+          return [
+            success(message),
+            {
+              type: 'game-event',
+              event: {
                 gameId: result.id,
                 clock: result.clock,
                 playerId: session.userId,
@@ -170,56 +227,62 @@ export const GameHandler = inject(
                   playerId: session.userId,
                   playerName: user?.name || 'Someone',
                 },
-            })
-          ])
-          break
+              },
+              game: await makeGame(result),
+            },
+          ]
         }
 
         case 'subscribe-to-game': {
           const { gameId } = message
 
           if (gameId === session.gameId) {
-            return
+            return success(message)
           }
 
           const user = await users.get(session.userId)
 
           if (!user) {
-            logger.error({ userId: session.userId }, 'Authenticated user not found')
-            return sendFail(socketId, message, 'system-inconsistency')
+            logger.error(
+              { userId: session.userId },
+              'Authenticated user not found',
+            )
+            return failure(message, 'system-inconsistency')
           }
-
-          if (!user.gameIds.includes(gameId)) {
-            return sendFail(socketId, message, 'join-first')
+          if (gameId && !user.gameIds.includes(gameId)) {
+            return failure(message, 'members-only')
           }
 
           await sessions.subscribeToGame(socketId, gameId)
-          await sendOk(socketId, message)
-          break
+          return success(message)
         }
 
         case 'leave-game': {
           const { gameId } = message
           const user = await users.get(session.userId)
           if (!user) {
-            logger.error({ userId: session.userId }, 'Authenticated user not found')
-            return sendFail(socketId, message, 'system-inconsistency')
+            logger.error(
+              { userId: session.userId },
+              'Authenticated user not found',
+            )
+            return failure(message, 'system-inconsistency')
           }
           if (!user.gameIds.includes(gameId)) {
-            return sendFail(socketId, message, 'not-your-game')
+            return failure(message, 'members-only')
           }
           const result = await games.removePlayer(gameId, session.userId)
           if (result === 'failure') {
-            return sendFail(socketId, message, 'too-bad')
+            return failure(message, 'sorry')
           }
           if (session.gameId === gameId) {
             await sessions.subscribeToGame(socketId, null)
           }
-          await Promise.all([
-            sendOk(socketId, message),
-            broadcast(
-              result,
-              {
+
+          return [
+            success(message),
+            {
+              type: 'game-event',
+              event: {
                 gameId: result.id,
                 clock: result.clock,
                 playerId: session.userId,
@@ -229,9 +292,10 @@ export const GameHandler = inject(
                   playerId: session.userId,
                   playerName: user?.name || 'Someone',
                 },
-            })
-          ])
-          break
+              },
+              game: await makeGame(result),
+            },
+          ]
         }
 
         case 'get': {
@@ -241,75 +305,77 @@ export const GameHandler = inject(
               const user = await users.get(session.userId)
 
               if (!user) {
-                logger.error({ userId: session.userId }, 'Authenticated user not found')
-                return sendFail(socketId, message, 'system-inconsistency')
+                logger.error(
+                  { userId: session.userId },
+                  'Authenticated user not found',
+                )
+                return failure(message, 'system-inconsistency')
               }
 
-              send(socketId, {
+              return {
                 type: 'get',
                 resource,
                 requestId,
                 session: {
                   currentGameId: session.gameId,
                   ...user,
-                }
-              })
-              return
+                },
+              }
             }
 
             case 'contents': {
               if (resource.length === 1) {
                 const list = await contents.list()
-                send(socketId, {
+                return {
                   type: 'get',
                   resource,
                   requestId,
                   list,
-                })
-              } else {
-                const content: ContentSet | undefined = await contents.get(resource[1])
-                if (!content) {
-                  await sendFail(socketId, message, 'not-found')
-                  return
                 }
-                send(socketId, {
+              } else {
+                const content: ContentSet | undefined = await contents.get(
+                  resource[1],
+                )
+                if (!content) {
+                  return failure(message, 'not-found')
+                }
+                return {
                   type: 'get',
                   resource,
                   requestId,
                   content,
-                })
+                }
               }
-              return
             }
 
             case 'games': {
               const user = await users.get(session.userId)
 
               if (!user) {
-                logger.error({ userId: session.userId }, 'Authenticated user not found')
-                return sendFail(socketId, message, 'system-inconsistency')
+                logger.error(
+                  { userId: session.userId },
+                  'Authenticated user not found',
+                )
+                return failure(message, 'system-inconsistency')
               }
               const gameId = resource[1]
 
               if (!user.gameIds.includes(gameId)) {
-                await sendFail(socketId, message, 'not-found')
-                return
+                return failure(message, 'not-found')
               }
 
               const partialGame = await games.getGame(gameId)
               if (!partialGame) {
-                await sendFail(socketId, message, 'not-found')
-                return
+                return failure(message, 'not-found')
               }
               const game = await makeGame(partialGame)
 
-              await send(socketId, {
+              return {
                 type: 'get',
                 resource,
                 requestId: message.requestId,
                 game,
-              })
-              return;
+              }
             }
           }
         }
@@ -317,8 +383,7 @@ export const GameHandler = inject(
         case 'action': {
           const gameId = session.gameId
           if (!gameId) {
-            await sendFail(socketId, message, 'no-game')
-            return
+            return failure(message, 'no-game')
           }
           const result = await handleAction(
             session.userId,
@@ -326,16 +391,20 @@ export const GameHandler = inject(
             message.action,
           )
           if (result.type === 'failure') {
-            return sendFail(socketId, message, 'game-action-failed')
+            return failure(message, 'conflict')
           }
-          return Promise.all([
-            send(socketId, {
+          return [
+            {
               type: 'game-update',
               game: await makeGame(result.state),
               requestId: message.requestId,
-            }),
-            broadcast(result.state, result.event),
-          ])
+            },
+            {
+              type: 'game-event',
+              event: result.event,
+              game: await makeGame(result.state),
+            },
+          ]
         }
       }
     }
@@ -378,7 +447,7 @@ export const GameHandler = inject(
             // User has not authenticated yet
             if (message.type !== 'login') {
               // No other message is allowed yet
-              return sendFail(socketId, message, 'unauthenticated')
+              return send(socketId, failure(message, 'unauthenticated'))
             }
 
             // Authenticate user
@@ -386,7 +455,7 @@ export const GameHandler = inject(
             const user = await users.authenticate(username, password)
             if (!user) {
               // No other message is allowed
-              return sendFail(socketId, message, 'bad-auth')
+              return send(socketId, failure(message, 'bad-auth'))
             }
 
             // Associate socket with user
@@ -402,13 +471,27 @@ export const GameHandler = inject(
                 ...(user.recentGame && {
                   gameId: user.recentGame.id,
                   timestamp: user.recentGame.timestamp.valueOf(),
-                })
-              }
+                }),
+              },
             } as ServerLoginResponse)
             logger.debug({ session: newSession }, 'Created session')
           } else {
-            // User is authenticated
-            await onClientMessage(socketId, message, session)
+            try {
+              // User is authenticated, handle message
+              const result = await onClientMessage(socketId, message, session)
+              if (Array.isArray(result)) {
+                const [response, event] = result
+                await Promise.all([
+                  send(socketId, response),
+                  broadcastGameEvent(event),
+                ])
+              } else {
+                await send(socketId, result)
+              }
+            } catch (err) {
+              logger.error({ err, message, socketId }, 'onClientMessage error')
+              send(socketId, failure(message, 'error'))
+            }
           }
           break
       }

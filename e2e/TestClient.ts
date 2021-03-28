@@ -10,9 +10,9 @@ import {
 } from '../src/game/protocol'
 
 export class TestClient {
-  public responses: Record<string, ServerMessage>
+  public responses: Record<string, ServerResponse>
   public events: Record<number, ServerGameNotification>
-  private requestAwaiters: Record<string, (res: ServerMessage) => void>
+  private requestAwaiters: Record<string, (res: ServerResponse) => void>
   private eventAwaiters: Record<number, (res: ServerGameNotification) => void>
   private ws: WebSocket
   private awaitOpen: Promise<void>
@@ -50,11 +50,11 @@ export class TestClient {
   }
 
   private async receive(requestId: string): Promise<ServerResponse> {
-    let message: ServerMessage
+    let message: ServerResponse
     if (this.responses[requestId]) {
       message = this.responses[requestId]
     } else {
-      message = await new Promise<ServerMessage>((resolve) => {
+      message = await new Promise<ServerResponse>((resolve) => {
         this.requestAwaiters[requestId] = resolve
       })
     }
@@ -90,7 +90,7 @@ export class TestClient {
       this.receive(message.requestId),
     ])
     if (!type || response.type === type) {
-      return response as ServerMessage & { type: T }
+      return response as ServerResponse & { type: T }
     }
     throw new Error(`Expected response message ${type}, got ${response.type}`)
   }

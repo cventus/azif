@@ -56,12 +56,13 @@ function itemToUser(item: UserItem): User {
     name: item.name,
     username: item.username,
     gameIds: item.gameIds ? item.gameIds.values : [],
-    ...(item.recentGameEpoch && item.recentGameId && {
-      recentGame: {
-        id: item.recentGameId,
-        timestamp: item.recentGameEpoch,
-      }
-    }),
+    ...(item.recentGameEpoch &&
+      item.recentGameId && {
+        recentGame: {
+          id: item.recentGameId,
+          timestamp: item.recentGameEpoch,
+        },
+      }),
   }
 }
 

@@ -95,7 +95,7 @@ describe('WebSocket protocol', () => {
     await users.removeUser(bob.id)
   })
 
-  it('users can log', () =>
+  it('users can log in', () =>
     request(server)
       .ws('/ws')
       .sendJson({
@@ -284,5 +284,72 @@ describe('WebSocket protocol', () => {
         }),
       })
     )
+  })
+
+  it('users can change their username', async () => {
+    const client = makeClient()
+
+    await client.send({
+      type: 'login',
+      username: 'alice',
+      password: 'password',
+      requestId: 'login-req',
+    }, 'login')
+
+    await client.send({
+      type: 'set-username',
+      newUsername: 'alexa',
+      currentPassword: 'password',
+      requestId: 'set-username',
+    }, 'success')
+
+    const getSession = await client.send({
+      type: 'get',
+      resource: ['session'],
+      requestId: 'get-session-req',
+    }, 'get')
+
+    expect(getSession).toEqual({
+      type: 'get',
+      requestId: 'get-session-req',
+      resource: ['session'],
+      session: {
+        currentGameId: null,
+        gameIds: [],
+        id: alice.id,
+        name: 'Alice',
+        username: 'alexa',
+      }
+    } as p.ServerResponse)
+  })
+
+  it('users can change their passwords', async () => {
+    const client = makeClient()
+
+    await client.send({
+      type: 'login',
+      username: 'alice',
+      password: 'password',
+      requestId: 'login-req',
+    }, 'login')
+
+    await client.send({
+      type: 'set-password',
+      newPassword: 'PASSWORD',
+      currentPassword: 'password',
+      requestId: 'set-password',
+    }, 'success')
+
+    await client.send({
+      type: 'logout',
+      requestId: 'logout-req',
+    }, 'success')
+
+    await client.send({
+      type: 'login',
+      username: 'alice',
+      password: 'PASSWORD',
+      requestId: 'login-req-2',
+    }, 'login')
   })
 })

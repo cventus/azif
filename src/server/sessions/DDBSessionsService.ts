@@ -169,7 +169,12 @@ export const DDBSessionsService = inject(
       async createSession(socketId, userId) {
         await client
           .put({
-            Item: { id: `socket:${socketId}`, userId, gameId: null, ttl: ttl(SessionTTL) },
+            Item: {
+              id: `socket:${socketId}`,
+              userId,
+              gameId: null,
+              ttl: ttl(SessionTTL),
+            },
             TableName: ItemTableName,
             ConditionExpression: 'attribute_not_exists(id)',
           })

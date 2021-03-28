@@ -41,13 +41,9 @@ class SocketServerImpl extends EventEmitter implements SocketServer {
 
   private makeId() {
     return `connection-${this.counter++}`
-  } 
+  }
 
-
-  constructor(
-    config: SocketServerConfig,
-    logger: pino.Logger,
-  ) {
+  constructor(config: SocketServerConfig, logger: pino.Logger) {
     super()
     this.server = http.createServer()
     this.config = config
@@ -86,7 +82,6 @@ class SocketServerImpl extends EventEmitter implements SocketServer {
     this.wss.on('error', (err) => {
       logger.error(err, 'websocket server error')
     })
-
   }
 
   send(socketId: string, json: unknown): Promise<void> {
@@ -104,7 +99,9 @@ class SocketServerImpl extends EventEmitter implements SocketServer {
   listen() {
     return new Promise<void>((resolve) => {
       this.server.ref()
-      this.server.listen(this.config.port, this.config.host, () => resolve(undefined))
+      this.server.listen(this.config.port, this.config.host, () =>
+        resolve(undefined),
+      )
     })
   }
 
@@ -138,7 +135,7 @@ export const SocketServer = inject(
 
     const service = LoggerService.traceMethods(
       logger,
-      new SocketServerImpl(config, logger)
+      new SocketServerImpl(config, logger),
     )
 
     return service
