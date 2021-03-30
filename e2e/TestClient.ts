@@ -76,7 +76,7 @@ export class TestClient {
 
 
   public async send<T extends ServerMessage['type']>(
-    message: ClientRequest,
+    message: ClientRequest & { requestId: string },
     type?: T,
   ): Promise<ServerResponse & { type: T }> {
     await this.awaitOpen

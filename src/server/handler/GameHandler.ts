@@ -76,7 +76,7 @@ export const GameHandler = inject(
     }
 
     const failure = (
-      message: GameRequest,
+      message: { requestId: string },
       reason: string,
     ): ServerFailureResponse => {
       return {
@@ -86,7 +86,7 @@ export const GameHandler = inject(
       }
     }
 
-    const success = (message: GameRequest): ServerSuccessResponse => {
+    const success = (message: { requestId: string }): ServerSuccessResponse => {
       return { type: 'success', requestId: message.requestId }
     }
 
@@ -114,7 +114,7 @@ export const GameHandler = inject(
 
     const onClientMessage = async (
       socketId: string,
-      message: ClientRequest,
+      message: ClientRequest & { requestId: string },
       session: SocketSession,
     ): Promise<ServerResponse | [ServerResponse, ServerGameNotification]> => {
       switch (message.type) {
@@ -424,25 +424,19 @@ export const GameHandler = inject(
         case 'message':
           const message = event.json
           const session = await sessions.getSession(event.socketId)
-          if (!isClientRequest(message)) {
-            if (hasRequestId(message)) {
-              // Return a generic failure caused by request
-              logger.error({ socketId, message }, 'bad request')
-              send(socketId, {
-                type: 'failure',
-                requestId: message.requestId,
-                message: 'bad-request',
-              })
-              return
-            } else {
-              // Request doesn't even follow basic protocol, terminate it.
-              logger.error(
-                { socketId },
-                'unknown client message, terminating connection',
-              )
-              sockets.disconnect(socketId)
-              return
-            }
+          if (!hasRequestId(message)) {
+            // Request doesn't even follow basic protocol, terminate it.
+            logger.error(
+              { socketId },
+              'unknown client message, terminating connection',
+            )
+            sockets.disconnect(socketId)
+            return
+          } else if (!isClientRequest(message)) {
+            // Return a generic failure caused by request
+            logger.error({ socketId, message }, 'bad request')
+            send(socketId, failure(message, 'bad-request'))
+            return
           } else if (!session) {
             // User has not authenticated yet
             if (message.type !== 'login') {

@@ -42,7 +42,6 @@ const ResourceId = Union(
 
 const ClientLoginRequest = {
   type: Literal('login'),
-  requestId: String,
   username: String,
   password: String,
 }
@@ -50,13 +49,11 @@ export type ClientLoginRequest = StructureType<typeof ClientLoginRequest>
 
 const ClientLogoutRequest = {
   type: Literal('logout'),
-  requestId: String,
 }
 export type ClientLogoutMessage = StructureType<typeof ClientLogoutRequest>
 
 const ClientCreateGameRequest = {
   type: Literal('create-game'),
-  requestId: String,
   name: String,
   contentSets: Array(String),
 }
@@ -64,28 +61,24 @@ export type ClientCreateGameRequest = StructureType<typeof ClientCreateGameReque
 
 const ClientJoinGameRequest = {
   type: Literal('join-game'),
-  requestId: String,
   gameId: String,
 }
 export type ClientJoinGameRequest = StructureType<typeof ClientJoinGameRequest>
 
 const ClientLeaveGameRequest = {
   type: Literal('leave-game'),
-  requestId: String,
   gameId: String,
 }
 export type ClientLeaveGameRequest = StructureType<typeof ClientLeaveGameRequest>
 
 const ClientSubscribeToGameRequest = {
   type: Literal('subscribe-to-game'),
-  requestId: String,
   gameId: Union(String, Literal(null)),
 }
 export type ClientSubscribeToGameRequest = StructureType<typeof ClientSubscribeToGameRequest>
 
 const ClientActionRequest = {
   type: Literal('action'),
-  requestId: String,
   action: PlayerAction,
 }
 export type ClientActionRequest = StructureType<typeof ClientActionRequest>
@@ -93,13 +86,11 @@ export type ClientActionRequest = StructureType<typeof ClientActionRequest>
 const ClientGetRequest = {
   type: Literal('get'),
   resource: ResourceId,
-  requestId: String,
 }
 export type ClientGetRequest = StructureType<typeof ClientGetRequest>
 
 const ClientSetUsernameRequest = {
   type: Literal('set-username'),
-  requestId: String,
   newUsername: String,
   currentPassword: String,
 }
@@ -107,7 +98,6 @@ export type ClientSetUsernameRequest = StructureType<typeof ClientSetUsernameReq
 
 const ClientSetPasswordRequest = {
   type: Literal('set-password'),
-  requestId: String,
   currentPassword: String,
   newPassword: String,
 }
@@ -115,7 +105,6 @@ export type ClientSetPasswordRequest = StructureType<typeof ClientSetPasswordReq
 
 const ClientSetNameRequest = {
   type: Literal('set-name'),
-  requestId: String,
   currentPassword: String,
   newName: String,
 }
