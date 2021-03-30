@@ -1,7 +1,7 @@
 import WebSocket from 'ws'
 
 import {
-  ClientMessage,
+  ClientRequest,
   isServerGameNotification,
   isServerResponse,
   ServerGameNotification,
@@ -76,7 +76,7 @@ export class TestClient {
 
 
   public async send<T extends ServerMessage['type']>(
-    message: ClientMessage,
+    message: ClientRequest,
     type?: T,
   ): Promise<ServerResponse & { type: T }> {
     await this.awaitOpen

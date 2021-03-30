@@ -13,15 +13,15 @@ import {
 import { DieRoll } from './dice'
 import { SessionState, ContentSet, GameEvent, GameState, ContentSetPreview } from './resources'
 
-const DicePlayerAction = {
+const PlayerDiceAction = {
   type: Literal('dice'),
   roll: Array(Union(DieRoll, Literal(null))),
 }
-export type DicePlayerAction = StructureType<typeof DicePlayerAction>
+export type PlayerDiceAction = StructureType<typeof PlayerDiceAction>
 
 const PlayerAction = Union(
   ChatAction,
-  DicePlayerAction,
+  PlayerDiceAction,
   SwitchCharacterAction,
   DrawCardAction,
   SetConditionAction,
@@ -40,102 +40,102 @@ const ResourceId = Union(
   Tuple(Literal('contents')),
 )
 
-const PlayerLoginRequest = {
+const ClientLoginRequest = {
   type: Literal('login'),
   requestId: String,
   username: String,
   password: String,
 }
-export type PlayerLoginRequest = StructureType<typeof PlayerLoginRequest>
+export type ClientLoginRequest = StructureType<typeof ClientLoginRequest>
 
-const PlayerLogoutRequest = {
+const ClientLogoutRequest = {
   type: Literal('logout'),
   requestId: String,
 }
-export type PlayerLogoutMessage = StructureType<typeof PlayerLogoutRequest>
+export type ClientLogoutMessage = StructureType<typeof ClientLogoutRequest>
 
-const PlayerCreateGameRequest = {
+const ClientCreateGameRequest = {
   type: Literal('create-game'),
   requestId: String,
   name: String,
   contentSets: Array(String),
 }
-export type PlayerCreateGameRequest = StructureType<typeof PlayerCreateGameRequest>
+export type ClientCreateGameRequest = StructureType<typeof ClientCreateGameRequest>
 
-const PlayerJoinGameRequest = {
+const ClientJoinGameRequest = {
   type: Literal('join-game'),
   requestId: String,
   gameId: String,
 }
-export type PlayerJoinGameRequest = StructureType<typeof PlayerJoinGameRequest>
+export type ClientJoinGameRequest = StructureType<typeof ClientJoinGameRequest>
 
-const PlayerLeaveGameRequest = {
+const ClientLeaveGameRequest = {
   type: Literal('leave-game'),
   requestId: String,
   gameId: String,
 }
-export type PlayerLeaveGameRequest = StructureType<typeof PlayerLeaveGameRequest>
+export type ClientLeaveGameRequest = StructureType<typeof ClientLeaveGameRequest>
 
-const PlayerSubscribeToGameRequest = {
+const ClientSubscribeToGameRequest = {
   type: Literal('subscribe-to-game'),
   requestId: String,
   gameId: Union(String, Literal(null)),
 }
-export type PlayerSubscribeToGameRequest = StructureType<typeof PlayerSubscribeToGameRequest>
+export type ClientSubscribeToGameRequest = StructureType<typeof ClientSubscribeToGameRequest>
 
-const PlayerActionRequest = {
+const ClientActionRequest = {
   type: Literal('action'),
   requestId: String,
   action: PlayerAction,
 }
-export type PlayerActionRequest = StructureType<typeof PlayerActionRequest>
+export type ClientActionRequest = StructureType<typeof ClientActionRequest>
 
-const PlayerGetRequest = {
+const ClientGetRequest = {
   type: Literal('get'),
   resource: ResourceId,
   requestId: String,
 }
-export type PlayerGetRequest = StructureType<typeof PlayerGetRequest>
+export type ClientGetRequest = StructureType<typeof ClientGetRequest>
 
-const PlayerSetUsernameRequest = {
+const ClientSetUsernameRequest = {
   type: Literal('set-username'),
   requestId: String,
   newUsername: String,
   currentPassword: String,
 }
-export type PlayerSetUsernameRequest = StructureType<typeof PlayerSetUsernameRequest>
+export type ClientSetUsernameRequest = StructureType<typeof ClientSetUsernameRequest>
 
-const PlayerSetPasswordRequest = {
+const ClientSetPasswordRequest = {
   type: Literal('set-password'),
   requestId: String,
   currentPassword: String,
   newPassword: String,
 }
-export type PlayerSetPasswordRequest = StructureType<typeof PlayerSetPasswordRequest>
+export type ClientSetPasswordRequest = StructureType<typeof ClientSetPasswordRequest>
 
-const PlayerSetNameRequest = {
+const ClientSetNameRequest = {
   type: Literal('set-name'),
   requestId: String,
   currentPassword: String,
   newName: String,
 }
-export type PlayerSetNameRequest = StructureType<typeof PlayerSetNameRequest>
+export type ClientSetNameRequest = StructureType<typeof ClientSetNameRequest>
 
-const ClientMessage = Union(
-  PlayerSetUsernameRequest,
-  PlayerSetPasswordRequest,
-  PlayerSetNameRequest,
-  PlayerLoginRequest,
-  PlayerLogoutRequest,
-  PlayerCreateGameRequest,
-  PlayerJoinGameRequest,
-  PlayerLeaveGameRequest,
-  PlayerSubscribeToGameRequest,
-  PlayerActionRequest,
-  PlayerGetRequest,
+export const ClientRequest = Union(
+  ClientSetUsernameRequest,
+  ClientSetPasswordRequest,
+  ClientSetNameRequest,
+  ClientLoginRequest,
+  ClientLogoutRequest,
+  ClientCreateGameRequest,
+  ClientJoinGameRequest,
+  ClientLeaveGameRequest,
+  ClientSubscribeToGameRequest,
+  ClientActionRequest,
+  ClientGetRequest,
 )
-export type ClientMessage = StructureType<typeof ClientMessage>
-export const isClientMessage = validate(ClientMessage)
+export type ClientRequest = StructureType<typeof ClientRequest>
+export const isClientRequest = validate(ClientRequest)
 
 export const ServerGameNotification = {
   type: Literal('game-event'),

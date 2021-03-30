@@ -1,7 +1,7 @@
 import {
-  ClientMessage,
+  ClientRequest,
   ServerGameNotification,
-  isClientMessage,
+  isClientRequest,
   ServerMessage,
   ServerLoginResponse,
   ServerResponse,
@@ -76,7 +76,7 @@ export const GameHandler = inject(
     }
 
     const failure = (
-      message: ClientMessage,
+      message: GameRequest,
       reason: string,
     ): ServerFailureResponse => {
       return {
@@ -86,7 +86,7 @@ export const GameHandler = inject(
       }
     }
 
-    const success = (message: ClientMessage): ServerSuccessResponse => {
+    const success = (message: GameRequest): ServerSuccessResponse => {
       return { type: 'success', requestId: message.requestId }
     }
 
@@ -114,7 +114,7 @@ export const GameHandler = inject(
 
     const onClientMessage = async (
       socketId: string,
-      message: ClientMessage,
+      message: ClientRequest,
       session: SocketSession,
     ): Promise<ServerResponse | [ServerResponse, ServerGameNotification]> => {
       switch (message.type) {
@@ -424,7 +424,7 @@ export const GameHandler = inject(
         case 'message':
           const message = event.json
           const session = await sessions.getSession(event.socketId)
-          if (!isClientMessage(message)) {
+          if (!isClientRequest(message)) {
             if (hasRequestId(message)) {
               // Return a generic failure caused by request
               logger.error({ socketId, message }, 'bad request')

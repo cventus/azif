@@ -103,7 +103,7 @@ describe('WebSocket protocol', () => {
         username: 'alice',
         password: 'password',
         requestId: 'login-req',
-      } as p.PlayerLoginRequest)
+      } as p.ClientLoginRequest)
       .expectJson({
         type: 'login',
         requestId: 'login-req',

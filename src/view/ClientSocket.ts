@@ -1,4 +1,4 @@
-import { ClientMessage, isServerMessage } from '../game/protocol'
+import { ClientRequest, isServerMessage } from '../game/protocol'
 import { connection } from './ducks/connection'
 import { Dispatch } from './store'
 
