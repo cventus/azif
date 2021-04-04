@@ -4,7 +4,7 @@ import { EnvironmentLoggerConfig, LoggerService } from './logger/LoggerService'
 import { SocketServer, SocketServerConfig } from './sockets/SocketServer'
 
 import { DocumentClient } from './ddb/DocumentClient'
-import { TableConfig } from './ddb/TableConfig'
+import { DefaultTableConfig, TableConfig } from './ddb/TableConfig'
 
 import GameServer from './GameServer'
 import { GameHandler } from './handler/GameHandler'
@@ -18,12 +18,15 @@ import { DDBUsersService } from './users/DDBUsersService'
 
 type CleanupHandler = () => Promise<void>
 
-const getEnv = (name: string): string => {
+const getEnv = (name: string, fallback?: string): string => {
   const value = process.env[name]
   if (!value) {
+    if (fallback) {
+      return fallback
+    }
     throw new Error(`Variable not defined: ${name}`)
   }
-  return value
+  return value.trim()
 }
 
 export async function main(): Promise<CleanupHandler> {
@@ -33,14 +36,16 @@ export async function main(): Promise<CleanupHandler> {
     path: '/ws',
   }
 
+  const defaults = DefaultTableConfig.tables
+
   const tableConfig: TableConfig = {
     tables: {
-      content: getEnv('ITEMS_TABLE_NAME'),
-      events: getEnv('EVENTS_TABLE_NAME'),
-      gameSessions: getEnv('SESSIONS_TABLE_NAME'),
-      games: getEnv('process.env.ITEMS_TABLE_NAME'),
-      sessions: getEnv('process.env.ITEMS_TABLE_NAME'),
-      users: getEnv('process.env.ITEMS_TABLE_NAME'),
+      content: getEnv('ITEMS_TABLE_NAME', defaults.content),
+      events: getEnv('EVENTS_TABLE_NAME', defaults.events),
+      gameSessions: getEnv('SESSIONS_TABLE_NAME', defaults.gameSessions),
+      games: getEnv('ITEMS_TABLE_NAME', defaults.games),
+      sessions: getEnv('ITEMS_TABLE_NAME', defaults.sessions),
+      users: getEnv('ITEMS_TABLE_NAME', defaults.users),
     },
   }
 
