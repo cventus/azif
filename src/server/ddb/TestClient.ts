@@ -2,7 +2,12 @@ import DynamoDB from 'aws-sdk/clients/dynamodb'
 
 import { inject } from '../../inject'
 import { generateId } from '../generateId'
-import { TableConfig } from './TableConfig'
+import {
+  createTablesIfNotExists,
+  DefaultTableConfig,
+  deleteTablesIfExists,
+  TableConfig,
+} from './TableConfig'
 
 export const TestDynamoDB = inject({}, async () => {
   const testId = await generateId()
@@ -32,108 +37,16 @@ export const TestDocumentClient = inject(
   },
 )
 
-const TestTables: DynamoDB.CreateTableInput[] = [
-  {
-    TableName: 'events',
-    KeySchema: [
-      {
-        AttributeName: 'gameId',
-        KeyType: 'HASH',
-      },
-      {
-        AttributeName: 'clock',
-        KeyType: 'RANGE',
-      },
-    ],
-    AttributeDefinitions: [
-      {
-        AttributeName: 'gameId',
-        AttributeType: 'S',
-      },
-      {
-        AttributeName: 'clock',
-        AttributeType: 'N',
-      },
-    ],
-    ProvisionedThroughput: {
-      ReadCapacityUnits: 1,
-      WriteCapacityUnits: 1,
-    },
-  },
-  {
-    TableName: 'items',
-    KeySchema: [
-      {
-        AttributeName: 'id',
-        KeyType: 'HASH',
-      },
-    ],
-    AttributeDefinitions: [
-      {
-        AttributeName: 'id',
-        AttributeType: 'S',
-      },
-    ],
-    ProvisionedThroughput: {
-      ReadCapacityUnits: 1,
-      WriteCapacityUnits: 1,
-    },
-  },
-  {
-    TableName: 'sessions',
-    KeySchema: [
-      {
-        AttributeName: 'gameId',
-        KeyType: 'HASH',
-      },
-      {
-        AttributeName: 'socketId',
-        KeyType: 'RANGE',
-      },
-    ],
-    AttributeDefinitions: [
-      {
-        AttributeName: 'gameId',
-        AttributeType: 'S',
-      },
-      {
-        AttributeName: 'socketId',
-        AttributeType: 'S',
-      },
-    ],
-    ProvisionedThroughput: {
-      ReadCapacityUnits: 1,
-      WriteCapacityUnits: 1,
-    },
-  },
-]
-
-export const TestTableConfig = inject<TableConfig>({
-  tables: {
-    content: 'items',
-    events: 'events',
-    games: 'items',
-    gameSessions: 'sessions',
-    sessions: 'items',
-    users: 'items',
-  },
-})
+export const TestTableConfig = inject<TableConfig>(DefaultTableConfig)
 
 export const CreateTestTables = inject(
   { TestDynamoDB },
   async ({ TestDynamoDB: client }) => {
-    for (const table of TestTables) {
-      await client.createTable(table).promise()
-    }
-    for (const { TableName } of TestTables) {
-      await client.waitFor('tableExists', { TableName }).promise()
-    }
+    await createTablesIfNotExists(DefaultTableConfig, client)
     return client
   },
   async (client) => {
-    for (const { TableName } of TestTables) {
-      await client.deleteTable({ TableName }).promise()
-    }
+    await deleteTablesIfExists(DefaultTableConfig, client)
   },
 )
 
