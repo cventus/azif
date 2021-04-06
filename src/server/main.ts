@@ -1,10 +1,16 @@
 import { assemble, inject } from '../inject'
 
+import AWSDynamoDB from 'aws-sdk/clients/dynamodb'
+
 import { EnvironmentLoggerConfig, LoggerService } from './logger/LoggerService'
 import { SocketServer, SocketServerConfig } from './sockets/SocketServer'
 
 import { DocumentClient } from './ddb/DocumentClient'
-import { DefaultTableConfig, TableConfig } from './ddb/TableConfig'
+import {
+  createTablesIfNotExists,
+  DefaultTableConfig,
+  TableConfig,
+} from './ddb/TableConfig'
 
 import GameServer from './GameServer'
 import { GameHandler } from './handler/GameHandler'
@@ -51,12 +57,27 @@ export async function main(): Promise<CleanupHandler> {
 
   const app = await init(serverConfig, tableConfig)
   await app.get('SocketServer').listen()
+
+  const client = app.get('DynamoDB')
+  await createTablesIfNotExists(tableConfig, client)
+
   return () => app.destroy()
 }
 
 export const AppServices = {
   LoggerConfig: EnvironmentLoggerConfig,
   LoggerService,
+  DynamoDB: inject(
+    new AWSDynamoDB({
+      apiVersion: '2012-08-10',
+      endpoint: 'http://localhost:8000',
+      region: 'ddblocal',
+      credentials: {
+        accessKeyId: `test`,
+        secretAccessKey: 'test',
+      },
+    }),
+  ),
   DocumentClient,
   EventsService: DDBEventsService,
   ContentService: DDBContentService,

@@ -3,14 +3,7 @@ import { promisify } from 'util'
 
 import { LoggerService } from '../logger/LoggerService'
 import { inject } from '../../inject'
-import {
-  Delete,
-  DocumentClient,
-  DynamoDbSet,
-  Get,
-  Put,
-  Update,
-} from '../ddb/DocumentClient'
+import { Delete, DocumentClient, DynamoDbSet, Get, Put, Update } from '../ddb'
 import { TableConfig } from '../ddb/TableConfig'
 import { Optional, StructureType, validate } from '../../structure'
 import { generateId, randomBytes } from '../generateId'

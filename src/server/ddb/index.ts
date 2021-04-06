@@ -1,3 +1,14 @@
+import type { DynamoDB } from 'aws-sdk'
+
+export type TransactWriteItem = DynamoDB.DocumentClient.TransactWriteItem
+export type Put = DynamoDB.DocumentClient.Put
+export type Get = DynamoDB.DocumentClient.Get
+export type Update = DynamoDB.DocumentClient.Update
+export type Delete = DynamoDB.DocumentClient.Delete
+export type DynamoDbSet = DynamoDB.DocumentClient.DynamoDbSet
+
+export { DocumentClient, DynamoDB } from './DocumentClient'
+
 export function hasErrorCode(e: unknown): e is Record<'code', string> {
   if (e === null) return false
   if (typeof e !== 'object') return false

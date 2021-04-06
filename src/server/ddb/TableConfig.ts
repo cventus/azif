@@ -122,7 +122,11 @@ export const createTablesIfNotExists = async (
   const definitions = configureTableDefinitions(config)
 
   for (const table of definitions) {
-    await client.createTable(table).promise()
+    try {
+      await client.createTable(table).promise()
+    } catch (err) {
+      /* OK */
+    }
   }
   for (const { TableName } of definitions) {
     await client.waitFor('tableExists', { TableName }).promise()

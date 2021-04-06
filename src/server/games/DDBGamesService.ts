@@ -1,5 +1,5 @@
 import { inject } from '../../inject'
-import { DocumentClient, DynamoDbSet, Put, Update } from '../ddb/DocumentClient'
+import { DocumentClient, DynamoDbSet, Put, Update } from '../ddb'
 import { TableConfig } from '../ddb/TableConfig'
 import { LoggerService } from '../logger/LoggerService'
 
