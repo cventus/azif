@@ -126,7 +126,7 @@ const server = {
   target: 'node',
   module: {
     rules: [{
-      test: /\.ts?$/,
+      test: /\.ts$/,
       exclude: /node_modules/,
       use: {
         loader: 'babel-loader',
@@ -152,8 +152,46 @@ const server = {
   ],
 }
 
+const util = {
+  name: 'util',
+  entry: './src/server/util/main.ts',
+  output: {
+    path: path.join(__dirname, '/dist'),
+    filename: '[name].js',
+    publicPath: '/',
+  },
+  target: 'node',
+  module: {
+    rules: [{
+      test: /\.ts$/,
+      exclude: /node_modules/,
+      use: {
+        loader: 'babel-loader',
+        options: {
+          cacheDirectory: true,
+        }
+      }
+    }]
+  },
+  resolve: {
+    extensions,
+  },
+  plugins: [
+    new ForkTsCheckerWebpackPlugin({
+      typescript: {
+        diagnosticOptions: {
+          semantic: true,
+          syntactic: true,
+        },
+      },
+    }),
+  ],
+}
+
+
 module.exports = [
   view,
   lambdaApp('lambda', './src/lambda/index.ts'),
   server,
+  util,
 ]
