@@ -35,7 +35,7 @@ export const Dictionary = <T>(structure: T): Dictionary<T> =>
 type TaggedArray<T extends [...unknown[]], TagName extends string> = {
   [Tag]: TagName
   structures: {
-    readonly [key in Exclude<keyof T, keyof []>]: T[key]
+    readonly [key in keyof T]: T[key]
   }
 }
 
