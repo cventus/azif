@@ -1,20 +1,26 @@
 import { Reducer } from 'redux'
-import { ClientMessage, ServerMessage } from '../../game/protocol'
-import { ConnectionStatus } from '../ClientSocket'
+import { ClientRequest, ServerGameNotification, ServerResponse } from '../../game/protocol'
+import { ConnectionStatus, SendOptions } from '../ClientSocket'
 import { Action } from './actions'
 import { defineActions } from './lib'
 
+interface OkResponse {
+  request: ClientRequest
+  status: 'ok'
+  response: ServerResponse
+}
+
+interface ResponseTimeout {
+  request: ClientRequest
+  status: 'timeout'
+}
+
 export const connection = defineActions('connection', {
   setStatus: (status: ConnectionStatus) => ({ status }),
-  clientMessage: (message: ClientMessage) => ({ message }),
-  serverMessage: (message: ServerMessage) => ({ message }),
-  login: () => ({
-    /* no content */
-  }),
+  request: (request: ClientRequest, options?: SendOptions) => ({ request, options }),
+  response: (res: OkResponse | ResponseTimeout) => ({ ...res }),
+  notification: (notification: ServerGameNotification) => ({ notification }),
   connect: () => ({
-    /* no content */
-  }),
-  logout: () => ({
     /* no content */
   }),
 })

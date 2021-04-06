@@ -42,9 +42,8 @@ export const GameEventsContainer: React.FC<GameEventsContainerProps> = ({}) => {
         const text = inputRef.current.value
         if (text.length > 0) {
           dispatch(
-            connection.clientMessage({
+            connection.request({
               type: 'action',
-              requestId: 'my-req',
               action: {
                 type: 'chat',
                 text,

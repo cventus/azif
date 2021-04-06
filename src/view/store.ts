@@ -36,9 +36,9 @@ export default function createStore(
   const reducer = createReducer(history)
 
   const socketConfig = {
-    loginUrl: 'http://localhost:3001/login',
-    logoutUrl: 'http://localhost:3001/logout',
-    openSocketUrl: 'ws://localhost:3001/login',
+    loginUrl: 'http://localhost:3001/ws',
+    logoutUrl: 'http://localhost:3001/ws',
+    openSocketUrl: 'ws://localhost:3001/ws',
   }
 
   const store = createReduxStore(

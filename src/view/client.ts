@@ -1,39 +1,56 @@
-import { replace } from 'connected-react-router'
 import { Middleware } from 'redux'
-import { ClientSocket, ClientConfig } from './ClientSocket'
+import { ClientSocket, ClientConfig, RequestTimeoutError } from './ClientSocket'
 import { Action } from './ducks/actions'
-import { toGamesPage } from './paths'
 
 export const clientMiddleware: (config: ClientConfig) => Middleware = (
   config,
 ) => ({ dispatch }) => {
-  const socket = new ClientSocket(config, dispatch)
+  const socket = new ClientSocket(config)
 
-  return (next) => (action: Action) => {
+  socket.onNotification = (notification) => {
+    dispatch({
+      type: 'connection/notification',
+      notification,
+    } as Action)
+  }
+
+  socket.onConnectionStatusChange = (status) => {
+    dispatch({
+      type: 'connection/setStatus',
+      status,
+    } as Action)
+  }
+
+  return (next) => async (action: Action) => {
     console.log(action)
     switch (action.type) {
-      // Swallow certain connection messages
-      case 'connection/clientMessage':
-        socket.send(action.message)
+      case 'connection/request': {
+        try {
+          const response = await socket.send(action.request, action.options)
+          dispatch({
+            type: 'connection/response',
+            request: action.request,
+            response: response,
+            status: 'ok',
+          } as Action)
+        } catch (err) {
+          if (err instanceof RequestTimeoutError) {
+            dispatch({
+              type: 'connection/response',
+              request: action.request,
+              status: 'timeout',
+            } as Action)
+          } else {
+            throw err
+          }
+        }
         break
+      }
 
-      case 'connection/login':
-        socket.login()
-        break
-
-      case 'connection/connect':
+      case 'connection/connect': {
         socket.connect()
         break
-
-      case 'connection/logout':
-        socket.logout()
-        break
-
-      case 'connection/setStatus':
-        if (action.status === 'connected') {
-          dispatch(replace(toGamesPage()))
-        }
-        return next(action)
+      }
 
       default: {
         return next(action)

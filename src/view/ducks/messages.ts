@@ -20,8 +20,8 @@ const reducer: Reducer<MessageState, Action> = (
   action = { type: undefined },
 ) => {
   switch (action.type) {
-    case 'connection/serverMessage': {
-      const serverMessage = action.message
+    case 'connection/notification': {
+      const serverMessage = action.notification
       if (serverMessage.type === 'game-event') {
         const gameEvent: DatedMessage = {
           ...serverMessage.event,
