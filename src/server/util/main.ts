@@ -2,7 +2,7 @@ import { assemble, inject } from '../../inject'
 
 import { EnvironmentLoggerConfig, LoggerService } from '../logger/LoggerService'
 
-import { DynamoDB, DocumentClient } from '../ddb/DocumentClient'
+import { DocumentClient } from '../ddb/DocumentClient'
 import { DefaultTableConfig, TableConfig } from '../ddb/TableConfig'
 
 import { DDBContentService } from '../content/DDBContentService'
@@ -12,7 +12,6 @@ import { DDBSessionsService } from '../sessions/DDBSessionsService'
 import { DDBUsersService } from '../users/DDBUsersService'
 
 import AWSDynamoDB from 'aws-sdk/clients/dynamodb'
-import { generateId } from '../generateId'
 
 const getEnv = (name: string, fallback?: string): string => {
   const value = process.env[name]

@@ -1,13 +1,9 @@
 import React from 'react'
 
-interface GameCharacterContainerProps {
-}
+interface GameCharacterContainerProps {}
 
 export const GameCharacterContainer: React.FC<GameCharacterContainerProps> = ({}) => {
-  return (
-    <div>
-    </div>
-  )
+  return <div></div>
 }
 
 export default GameCharacterContainer

@@ -3,14 +3,13 @@ import { useDispatch, useSelector } from '../store'
 import { connection } from '../ducks/connection'
 import { DatedMessage } from '../ducks/messages'
 
-interface GameEventsContainerProps {
-}
+interface GameEventsContainerProps {}
 
 const Hours = (props: { date: Date }) => {
   const { date } = props
 
-  let hours = date.getHours().toString().padStart(2, '0')
-  let minutes = date.getMinutes().toString().padStart(2, '0')
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
 
   return <>{`${hours}:${minutes}`}</>
 }
@@ -66,9 +65,7 @@ export const GameEventsContainer: React.FC<GameEventsContainerProps> = ({}) => {
       </div>
       <div>
         {gameEvents.reduceRight((acc, current) => {
-          acc.push(
-            <GameEventRow key={current.clock} gameEvent={current} />,
-          )
+          acc.push(<GameEventRow key={current.clock} gameEvent={current} />)
           return acc
         }, [] as JSX.Element[])}
       </div>

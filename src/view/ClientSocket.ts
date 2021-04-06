@@ -13,7 +13,9 @@ export const ConnectionStatus = [
 
 export class RequestTimeoutError {
   public readonly request: ClientRequest
-  constructor(request: ClientRequest) { this.request = request }
+  constructor(request: ClientRequest) {
+    this.request = request
+  }
 }
 
 export type ConnectionStatus = typeof ConnectionStatus[number]

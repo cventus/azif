@@ -120,7 +120,7 @@ export const DDBContentService = inject(
           items: DynamoDB.DocumentClient.BatchWriteItemRequestMap,
         ): Promise<void> => {
           let nextItems = items
-          do {
+          for (;;) {
             const { UnprocessedItems = {} } = await client
               .batchWrite({ RequestItems: nextItems })
               .promise()
@@ -135,7 +135,7 @@ export const DDBContentService = inject(
             } else {
               break
             }
-          } while (true)
+          }
         }
 
         if (oldItemIds.length > 0) {

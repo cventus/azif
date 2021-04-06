@@ -151,7 +151,7 @@ export const CredentialsTableActions = (TableName: string) => ({
   },
 })
 
-export interface DDBUsersService extends UsersService {}
+export type DDBUsersService = UsersService
 
 export const DDBUsersService = inject(
   { DocumentClient, TableConfig, LoggerService },

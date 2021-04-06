@@ -586,8 +586,8 @@ export const DDBGamesService = inject(
         }
 
         const MAX_RETRIES = 2
-        let retries: number = 0
-        let shouldRetry: boolean = false
+        let retries = 0
+        let shouldRetry = false
 
         do
           try {
@@ -642,8 +642,8 @@ export const DDBGamesService = inject(
         }
 
         const MAX_RETRIES = 2
-        let retries: number = 0
-        let shouldRetry: boolean = false
+        let retries = 0
+        let shouldRetry = false
 
         do
           try {

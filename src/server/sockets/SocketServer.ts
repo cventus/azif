@@ -126,11 +126,6 @@ class SocketServerImpl extends EventEmitter implements SocketServer {
 export const SocketServer = inject(
   { SocketServerConfig, LoggerService },
   ({ SocketServerConfig: config, LoggerService }): SocketServer => {
-    const server = http.createServer()
-    const wss = new WebSocket.Server({
-      server,
-      path: config.path,
-    })
     const logger = LoggerService.create('SocketServer')
 
     const service = LoggerService.traceMethods(

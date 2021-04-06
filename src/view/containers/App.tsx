@@ -14,10 +14,15 @@ interface AppProps {
   history: History
 }
 
-export const MainView = styled.main`
-`
+export const MainView = styled.main``
 
-const MainViewState = withVisualState(MainView, ['front', 'games', 'settings', 'game', 'unknown'])
+const MainViewState = withVisualState(MainView, [
+  'front',
+  'games',
+  'settings',
+  'game',
+  'unknown',
+])
 
 const App: React.FC<AppProps> = ({ history }) => {
   const page = useSelector((state) => state.view.page)
@@ -27,17 +32,19 @@ const App: React.FC<AppProps> = ({ history }) => {
 
   return (
     <ConnectedRouter history={history}>
-      <MainViewState state={currentPage}>{ ({ state, from, to }) => {
-        const states = [state, from, to]
-        return (
-        <>
-          { states.includes('front') && <AuthenticationContainer /> }
-          { states.includes('games') && <GamesContainer /> }
-          { states.includes('settings') && <SettingsContainer /> }
-          { states.includes('game') && <GameEventsContainer /> }
-        </>
-        )
-      }}</MainViewState>
+      <MainViewState state={currentPage}>
+        {({ state, from, to }) => {
+          const states = [state, from, to]
+          return (
+            <>
+              {states.includes('front') && <AuthenticationContainer />}
+              {states.includes('games') && <GamesContainer />}
+              {states.includes('settings') && <SettingsContainer />}
+              {states.includes('game') && <GameEventsContainer />}
+            </>
+          )
+        }}
+      </MainViewState>
     </ConnectedRouter>
   )
 }

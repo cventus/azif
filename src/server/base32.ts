@@ -54,7 +54,7 @@ export function encodeBase32(buffer: Buffer) {
   }
 
   for (let i = 0; i < buffer.length; i++) {
-    let next = buffer[i]
+    const next = buffer[i]
 
     for (let j = 0x80; j > 0; j >>= 1) {
       addBit(Boolean(next & j))

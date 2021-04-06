@@ -2,28 +2,32 @@ import React, { FormEvent, useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from '../store'
 import { connection } from '../ducks/connection'
 
-interface AuthenticationContainerProps {
-}
+interface AuthenticationContainerProps {}
 
 const LoginForm = () => {
   const dispatch = useDispatch()
   const usernameRef = useRef<HTMLInputElement>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
 
-  const login = useCallback((e: FormEvent<HTMLFormElement>) => {
-    const { current: username } = usernameRef
-    const { current: password } = passwordRef
+  const login = useCallback(
+    (e: FormEvent<HTMLFormElement>) => {
+      const { current: username } = usernameRef
+      const { current: password } = passwordRef
 
-    e.preventDefault()
+      e.preventDefault()
 
-    if (username && username.value && password && password.value) {
-      dispatch(connection.request({
-        type: 'login',
-        username: username.value,
-        password: password.value,
-      }))
-    }
-  }, [dispatch, usernameRef, passwordRef])
+      if (username && username.value && password && password.value) {
+        dispatch(
+          connection.request({
+            type: 'login',
+            username: username.value,
+            password: password.value,
+          }),
+        )
+      }
+    },
+    [dispatch, usernameRef, passwordRef],
+  )
 
   return (
     <form onSubmit={login}>
@@ -45,15 +49,17 @@ const AuthenticationContainer: React.FC<AuthenticationContainerProps> = () => {
   const session = useSelector((state) => state.session.state)
 
   const logout = useCallback(() => {
-    dispatch(connection.request({
-      type: 'logout'
-    }))
+    dispatch(
+      connection.request({
+        type: 'logout',
+      }),
+    )
   }, [dispatch])
 
   return (
     <>
       {!session && <LoginForm />}
-      {session && (<button onClick={logout}>Logout</button>)}
+      {session && <button onClick={logout}>Logout</button>}
     </>
   )
 }

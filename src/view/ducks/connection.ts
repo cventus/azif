@@ -1,5 +1,9 @@
 import { Reducer } from 'redux'
-import { ClientRequest, ServerGameNotification, ServerResponse } from '../../game/protocol'
+import {
+  ClientRequest,
+  ServerGameNotification,
+  ServerResponse,
+} from '../../game/protocol'
 import { ConnectionStatus, SendOptions } from '../ClientSocket'
 import { Action } from './actions'
 import { defineActions } from './lib'
@@ -17,7 +21,10 @@ interface ResponseTimeout {
 
 export const connection = defineActions('connection', {
   setStatus: (status: ConnectionStatus) => ({ status }),
-  request: (request: ClientRequest, options?: SendOptions) => ({ request, options }),
+  request: (request: ClientRequest, options?: SendOptions) => ({
+    request,
+    options,
+  }),
   response: (res: OkResponse | ResponseTimeout) => ({ ...res }),
   notification: (notification: ServerGameNotification) => ({ notification }),
   connect: () => ({

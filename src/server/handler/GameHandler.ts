@@ -377,6 +377,9 @@ export const GameHandler = inject(
                 game,
               }
             }
+
+            default:
+              return failure(message, 'bad-request')
           }
         }
 
@@ -416,12 +419,13 @@ export const GameHandler = inject(
           logger.info({ socketId }, 'player connected')
           break
 
-        case 'disconnect':
+        case 'disconnect': {
           logger.info({ socketId }, 'player disconnected')
           await sessions.removeSession(socketId)
           break
+        }
 
-        case 'message':
+        case 'message': {
           const message = event.json
           const session = await sessions.getSession(event.socketId)
           if (!hasRequestId(message)) {
@@ -488,6 +492,7 @@ export const GameHandler = inject(
             }
           }
           break
+        }
       }
     })
   },

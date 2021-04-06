@@ -212,11 +212,10 @@ function validateDictionary<T>(
     if (value === null) {
       return false
     }
-    for (let key of Object.keys(value)) {
+    for (const key of Object.keys(value)) {
       if (!predicate((value as Record<string, unknown>)[key])) {
         return false
       }
-
     }
     return true
   }

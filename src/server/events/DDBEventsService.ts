@@ -43,8 +43,8 @@ export const DDBEventsService = inject(
           return item
         },
         async list(gameId, options = {}) {
-          let queryNames: Record<string, string> = {}
-          let queryValues: Record<string, string | number> = {}
+          const queryNames: Record<string, string> = {}
+          const queryValues: Record<string, string | number> = {}
           const expressions: string[] = []
 
           if (typeof options.since === 'number') {

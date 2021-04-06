@@ -65,7 +65,7 @@ export const GameActionsHandler = inject(
           states.setCardFacing(gameId, action.card, action.facing),
         )
 
-      case 'switch-character':
+      case 'switch-character': {
         const update = states.switchCharacter(
           gameId,
           userId,
@@ -73,6 +73,7 @@ export const GameActionsHandler = inject(
           action.newCharacter,
         )
         return writeEvent(action, update)
+      }
 
       case 'chat':
         if (action.text.length > MAX_CHAT) {
@@ -149,8 +150,8 @@ export const GameActionsHandler = inject(
         const conditionCards = sets
           .reduce<ConditionCard[]>((list, set) => {
             const cards: ConditionCard[] = []
-            for (const cardId in cards) {
-              const card = cards[cardId]
+            for (const cardId in set.cards) {
+              const card = set.cards[cardId]
               if (
                 card.type === 'condition' &&
                 card.condition === action.condition

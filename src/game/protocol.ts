@@ -11,7 +11,13 @@ import {
   TradeCardAction,
 } from './actions'
 import { DieRoll } from './dice'
-import { SessionState, ContentSet, GameEvent, GameState, ContentSetPreview } from './resources'
+import {
+  SessionState,
+  ContentSet,
+  GameEvent,
+  GameState,
+  ContentSetPreview,
+} from './resources'
 
 const PlayerDiceAction = {
   type: Literal('dice'),
@@ -57,7 +63,9 @@ const ClientCreateGameRequest = {
   name: String,
   contentSets: Array(String),
 }
-export type ClientCreateGameRequest = StructureType<typeof ClientCreateGameRequest>
+export type ClientCreateGameRequest = StructureType<
+  typeof ClientCreateGameRequest
+>
 
 const ClientJoinGameRequest = {
   type: Literal('join-game'),
@@ -69,13 +77,17 @@ const ClientLeaveGameRequest = {
   type: Literal('leave-game'),
   gameId: String,
 }
-export type ClientLeaveGameRequest = StructureType<typeof ClientLeaveGameRequest>
+export type ClientLeaveGameRequest = StructureType<
+  typeof ClientLeaveGameRequest
+>
 
 const ClientSubscribeToGameRequest = {
   type: Literal('subscribe-to-game'),
   gameId: Union(String, Literal(null)),
 }
-export type ClientSubscribeToGameRequest = StructureType<typeof ClientSubscribeToGameRequest>
+export type ClientSubscribeToGameRequest = StructureType<
+  typeof ClientSubscribeToGameRequest
+>
 
 const ClientActionRequest = {
   type: Literal('action'),
@@ -94,14 +106,18 @@ const ClientSetUsernameRequest = {
   newUsername: String,
   currentPassword: String,
 }
-export type ClientSetUsernameRequest = StructureType<typeof ClientSetUsernameRequest>
+export type ClientSetUsernameRequest = StructureType<
+  typeof ClientSetUsernameRequest
+>
 
 const ClientSetPasswordRequest = {
   type: Literal('set-password'),
   currentPassword: String,
   newPassword: String,
 }
-export type ClientSetPasswordRequest = StructureType<typeof ClientSetPasswordRequest>
+export type ClientSetPasswordRequest = StructureType<
+  typeof ClientSetPasswordRequest
+>
 
 const ClientSetNameRequest = {
   type: Literal('set-name'),
@@ -162,14 +178,18 @@ const ServerCreateGameResponse = {
   requestId: String,
   game: GameState,
 }
-export type ServerCreateGameResponse = StructureType<typeof ServerCreateGameResponse>
+export type ServerCreateGameResponse = StructureType<
+  typeof ServerCreateGameResponse
+>
 
 const ServerGameUpdateResponse = {
   type: Literal('game-update'),
   requestId: String,
   game: GameState,
 }
-export type ServerGameUpdateResponse = StructureType<typeof ServerGameUpdateResponse>
+export type ServerGameUpdateResponse = StructureType<
+  typeof ServerGameUpdateResponse
+>
 
 const ServerGetGameResponse = {
   type: Literal('get'),
@@ -184,7 +204,9 @@ const ServerGetSessionResponse = {
   requestId: String,
   session: SessionState,
 }
-export type ServerGetSessionResponse = StructureType<typeof ServerGetSessionResponse>
+export type ServerGetSessionResponse = StructureType<
+  typeof ServerGetSessionResponse
+>
 
 const ServerGetContentResponse = {
   type: Literal('get'),
@@ -199,7 +221,9 @@ const ServerGetContentListResponse = {
   requestId: String,
   list: Array(ContentSetPreview),
 }
-export type ServerGetContentListResponse = StructureType<typeof ServerGetContentListResponse>
+export type ServerGetContentListResponse = StructureType<
+  typeof ServerGetContentListResponse
+>
 
 const ServerResponse = Union(
   ServerSuccessResponse,
@@ -215,9 +239,6 @@ const ServerResponse = Union(
 export type ServerResponse = StructureType<typeof ServerResponse>
 export const isServerResponse = validate(ServerResponse)
 
-const ServerMessage = Union(
-  ServerResponse,
-  ServerGameNotification,
-)
+const ServerMessage = Union(ServerResponse, ServerGameNotification)
 export type ServerMessage = StructureType<typeof ServerMessage>
 export const isServerMessage = validate(ServerMessage)
