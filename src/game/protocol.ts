@@ -178,12 +178,13 @@ const ServerGetGameResponse = {
   game: GameState,
 }
 
-const ServerGetProfileResponse = {
+const ServerGetSessionResponse = {
   type: Literal('get'),
   resource: Tuple(Literal('session')),
   requestId: String,
   session: SessionState,
 }
+export type ServerGetSessionResponse = StructureType<typeof ServerGetSessionResponse>
 
 const ServerGetContentResponse = {
   type: Literal('get'),
@@ -207,7 +208,7 @@ const ServerResponse = Union(
   ServerCreateGameResponse,
   ServerGameUpdateResponse,
   ServerGetGameResponse,
-  ServerGetProfileResponse,
+  ServerGetSessionResponse,
   ServerGetContentResponse,
   ServerGetContentListResponse,
 )
