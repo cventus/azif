@@ -39,13 +39,6 @@ const PlayerAction = Union(
 )
 export type PlayerAction = StructureType<typeof PlayerAction>
 
-const ResourceId = Union(
-  Tuple(Literal('session')),
-  Tuple(Literal('games'), String),
-  Tuple(Literal('contents'), String),
-  Tuple(Literal('contents')),
-)
-
 const ClientLoginRequest = {
   type: Literal('login'),
   username: String,
@@ -95,10 +88,26 @@ const ClientActionRequest = {
 }
 export type ClientActionRequest = StructureType<typeof ClientActionRequest>
 
-const ClientGetRequest = {
-  type: Literal('get'),
-  resource: ResourceId,
-}
+const ClientGetRequest = Union(
+  {
+    type: Literal('get'),
+    resource: Literal('game'),
+    gameId: String,
+  },
+  {
+    type: Literal('get'),
+    resource: Literal('session'),
+  },
+  {
+    type: Literal('get'),
+    resource: Literal('content-set'),
+    contentSetId: String,
+  },
+  {
+    type: Literal('get'),
+    resource: Literal('content-list'),
+  },
+)
 export type ClientGetRequest = StructureType<typeof ClientGetRequest>
 
 const ClientSetUsernameRequest = {
@@ -191,39 +200,33 @@ export type ServerGameUpdateResponse = StructureType<
   typeof ServerGameUpdateResponse
 >
 
-const ServerGetGameResponse = {
-  type: Literal('get'),
-  resource: Tuple(Literal('games'), String),
-  requestId: String,
-  game: GameState,
-}
-
-const ServerGetSessionResponse = {
-  type: Literal('get'),
-  resource: Tuple(Literal('session')),
-  requestId: String,
-  session: SessionState,
-}
-export type ServerGetSessionResponse = StructureType<
-  typeof ServerGetSessionResponse
->
-
-const ServerGetContentResponse = {
-  type: Literal('get'),
-  resource: Tuple(Literal('contents'), String),
-  requestId: String,
-  content: ContentSet,
-}
-
-const ServerGetContentListResponse = {
-  type: Literal('get'),
-  resource: Tuple(Literal('contents')),
-  requestId: String,
-  list: Array(ContentSetPreview),
-}
-export type ServerGetContentListResponse = StructureType<
-  typeof ServerGetContentListResponse
->
+const ServerGetResponse = Union(
+  {
+    type: Literal('get'),
+    resource: Literal('game'),
+    requestId: String,
+    game: GameState,
+  },
+  {
+    type: Literal('get'),
+    resource: Literal('session'),
+    requestId: String,
+    session: SessionState,
+  },
+  {
+    type: Literal('get'),
+    resource: Literal('content-set'),
+    requestId: String,
+    content: ContentSet,
+  },
+  {
+    type: Literal('get'),
+    resource: Literal('content-list'),
+    requestId: String,
+    list: Array(ContentSetPreview),
+  },
+)
+export type ServerGetResponse = StructureType<typeof ServerGetResponse>
 
 const ServerResponse = Union(
   ServerSuccessResponse,
@@ -231,10 +234,7 @@ const ServerResponse = Union(
   ServerLoginResponse,
   ServerCreateGameResponse,
   ServerGameUpdateResponse,
-  ServerGetGameResponse,
-  ServerGetSessionResponse,
-  ServerGetContentResponse,
-  ServerGetContentListResponse,
+  ServerGetResponse,
 )
 export type ServerResponse = StructureType<typeof ServerResponse>
 export const isServerResponse = validate(ServerResponse)

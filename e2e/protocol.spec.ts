@@ -4,7 +4,10 @@ import http from 'http'
 import { assemble, inject } from '../src/inject'
 import { TestModule } from '../src/server/ddb/TestClient'
 import { AppServices } from '../src/server/main'
-import { SocketServer, SocketServerConfig } from '../src/server/sockets/SocketServer'
+import {
+  SocketServer,
+  SocketServerConfig,
+} from '../src/server/sockets/SocketServer'
 import { User } from '../src/server/users'
 import { UsersService } from '../src/server/users/UsersService'
 import { ContentSet, ContentSetPreview } from '../src/game/resources'
@@ -33,15 +36,15 @@ const defaultContent: ContentSet = {
       type: 'common-item',
       name: 'brush',
       set: 'content:default',
-    }
-  }
+    },
+  },
 }
 
 beforeAll(async () => {
   const serverConfig: SocketServerConfig = {
     port: 0,
     host: 'localhost',
-    path: '/ws'
+    path: '/ws',
   }
   const app = await assemble({
     ...AppServices,
@@ -112,21 +115,23 @@ describe('WebSocket protocol', () => {
           gameIds: [],
           name: 'Alice',
           username: 'alice',
-        }
+        },
       })
       .close()
-      .expectClosed()
-  )
+      .expectClosed())
 
   it('users can log in and create games', async () => {
     const client = makeClient()
 
-    const login = await client.send({
-      type: 'login',
-      username: 'alice',
-      password: 'password',
-      requestId: 'login-req',
-    }, 'login')
+    const login = await client.send(
+      {
+        type: 'login',
+        username: 'alice',
+        password: 'password',
+        requestId: 'login-req',
+      },
+      'login',
+    )
 
     expect(login).toEqual({
       type: 'login',
@@ -136,66 +141,77 @@ describe('WebSocket protocol', () => {
         gameIds: [],
         name: 'Alice',
         username: 'alice',
-      }
+      },
     } as p.ServerLoginResponse)
 
-    const getContents = await client.send({
-      type: 'get',
-      resource: ['contents'],
-      requestId: 'get-contents-req'
-    }, 'get')
+    const getContents = await client.send(
+      {
+        type: 'get',
+        resource: 'content-list',
+        requestId: 'get-contents-req',
+      },
+      'get',
+    )
 
     expect(getContents).toEqual({
       type: 'get',
       requestId: 'get-contents-req',
-      resource: ['contents'],
+      resource: 'content-list',
       list: [defaultContentPreview],
-    } as p.ServerGetContentListResponse)
+    } as p.ServerGetResponse)
 
-    const createGame = await client.send({
-      type: 'create-game',
-      contentSets: [defaultContentPreview.id],
-      name: 'my game',
-      requestId: 'create-game-req'
-    }, 'create-game')
-
-    expect(createGame).toEqual(expect.objectContaining({
-      type: 'create-game',
-      requestId: 'create-game-req',
-      game: expect.objectContaining({
-        id: expect.stringMatching(/^game:/),
-        characters: {},
-        clock: 1,
-        contentSetIds: [defaultContentPreview.id],
+    const createGame = await client.send(
+      {
+        type: 'create-game',
+        contentSets: [defaultContentPreview.id],
         name: 'my game',
-        createdAt: expect.anything(),
-        flippedCardIds: [],
-        phase: 'starting',
-        players: {
-          [alice.id]: {
-            name: alice.name,
-          }
-        },
-      })
-    }) as p.ServerCreateGameResponse)
+        requestId: 'create-game-req',
+      },
+      'create-game',
+    )
 
-    const getSession = await client.send({
-      type: 'get',
-      resource: ['session'],
-      requestId: 'get-session-req',
-    }, 'get')
+    expect(createGame).toEqual(
+      expect.objectContaining({
+        type: 'create-game',
+        requestId: 'create-game-req',
+        game: expect.objectContaining({
+          id: expect.stringMatching(/^game:/),
+          characters: {},
+          clock: 1,
+          contentSetIds: [defaultContentPreview.id],
+          name: 'my game',
+          createdAt: expect.anything(),
+          flippedCardIds: [],
+          phase: 'starting',
+          players: {
+            [alice.id]: {
+              name: alice.name,
+            },
+          },
+        }),
+      }) as p.ServerCreateGameResponse,
+    )
+
+    const getSession = await client.send(
+      {
+        type: 'get',
+        resource: 'session',
+        requestId: 'get-session-req',
+      },
+      'get',
+    )
 
     expect(getSession).toEqual({
       type: 'get',
       requestId: 'get-session-req',
-      resource: ['session'],
+      resource: 'session',
       session: {
-          currentGameId: null,
-          gameIds: [createGame.game.id],
-          id: alice.id,
-          name: 'Alice',
-          username: 'alice',
-        }
+        currentGameId: null,
+        gameIds: [createGame.game.id],
+        id: alice.id,
+        name: 'Alice',
+        username: 'alice',
+      },
     } as p.ServerResponse)
 
     client.close()
@@ -209,60 +225,81 @@ describe('WebSocket protocol', () => {
     await games.addPlayer(game.id, alice.id)
     await games.addPlayer(game.id, bob.id)
 
-    await aliceClient.send({
-      type: 'login',
-      username: 'alice',
-      password: 'password',
-      requestId: 'login-req',
-    }, 'login')
-    await aliceClient.send({
-      type: 'subscribe-to-game',
-      gameId: game.id,
-      requestId: 'subscribe',
-    }, 'success')
+    await aliceClient.send(
+      {
+        type: 'login',
+        username: 'alice',
+        password: 'password',
+        requestId: 'login-req',
+      },
+      'login',
+    )
+    await aliceClient.send(
+      {
+        type: 'subscribe-to-game',
+        gameId: game.id,
+        requestId: 'subscribe',
+      },
+      'success',
+    )
 
-    await bobClient.send({
-      type: 'login',
-      username: 'bob',
-      password: 'password',
-      requestId: 'login-req',
-    }, 'login')
-    await bobClient.send({
-      type: 'subscribe-to-game',
-      gameId: game.id,
-      requestId: 'subscribe',
-    }, 'success')
+    await bobClient.send(
+      {
+        type: 'login',
+        username: 'bob',
+        password: 'password',
+        requestId: 'login-req',
+      },
+      'login',
+    )
+    await bobClient.send(
+      {
+        type: 'subscribe-to-game',
+        gameId: game.id,
+        requestId: 'subscribe',
+      },
+      'success',
+    )
 
-    await aliceClient.send({
-      type: 'action',
-      requestId: 'action-1',
-      action: {
-        type: 'switch-character',
-        playerId: alice.id,
-        oldCharacter: null,
-        newCharacter: 'ch-1',
-      }
-    }, 'game-update')
+    await aliceClient.send(
+      {
+        type: 'action',
+        requestId: 'action-1',
+        action: {
+          type: 'switch-character',
+          playerId: alice.id,
+          oldCharacter: null,
+          newCharacter: 'ch-1',
+        },
+      },
+      'game-update',
+    )
 
-    await bobClient.send({
-      type: 'action',
-      requestId: 'action-2',
-      action: {
-        type: 'switch-character',
-        playerId: bob.id,
-        oldCharacter: null,
-        newCharacter: 'ch-2',
-      }
-    }, 'game-update')
+    await bobClient.send(
+      {
+        type: 'action',
+        requestId: 'action-2',
+        action: {
+          type: 'switch-character',
+          playerId: bob.id,
+          oldCharacter: null,
+          newCharacter: 'ch-2',
+        },
+      },
+      'game-update',
+    )
 
-    const response = await aliceClient.send({
-      type: 'action',
-      requestId: 'action-3',
-      action: {
-        type: 'dice',
-        roll: [null, null, null],
-      }
-    }, 'game-update')
+    const response = await aliceClient.send(
+      {
+        type: 'action',
+        requestId: 'action-3',
+        action: {
+          type: 'dice',
+          roll: [null, null, null],
+        },
+      },
+      'game-update',
+    )
 
     await aliceClient.receiveNotification(response.game.clock)
     await bobClient.receiveNotification(response.game.clock)
@@ -272,84 +309,111 @@ describe('WebSocket protocol', () => {
       expect.objectContaining({
         [response.game.clock]: expect.objectContaining({
           type: 'game-event',
-          event: expect.objectContaining({ action: expect.objectContaining({ type: 'dice' }) })
+          event: expect.objectContaining({
+            action: expect.objectContaining({ type: 'dice' }),
+          }),
         }),
         [response.game.clock - 1]: expect.objectContaining({
           type: 'game-event',
-          event: expect.objectContaining({ action: expect.objectContaining({ type: 'switch-character' }) })
+          event: expect.objectContaining({
+            action: expect.objectContaining({ type: 'switch-character' }),
+          }),
         }),
         [response.game.clock - 2]: expect.objectContaining({
           type: 'game-event',
-          event: expect.objectContaining({ action: expect.objectContaining({ type: 'switch-character' }) })
+          event: expect.objectContaining({
+            action: expect.objectContaining({ type: 'switch-character' }),
+          }),
         }),
-      })
+      }),
     )
   })
 
   it('users can change their username', async () => {
     const client = makeClient()
 
-    await client.send({
-      type: 'login',
-      username: 'alice',
-      password: 'password',
-      requestId: 'login-req',
-    }, 'login')
+    await client.send(
+      {
+        type: 'login',
+        username: 'alice',
+        password: 'password',
+        requestId: 'login-req',
+      },
+      'login',
+    )
 
-    await client.send({
-      type: 'set-username',
-      newUsername: 'alexa',
-      currentPassword: 'password',
-      requestId: 'set-username',
-    }, 'success')
+    await client.send(
+      {
+        type: 'set-username',
+        newUsername: 'alexa',
+        currentPassword: 'password',
+        requestId: 'set-username',
+      },
+      'success',
+    )
 
-    const getSession = await client.send({
-      type: 'get',
-      resource: ['session'],
-      requestId: 'get-session-req',
-    }, 'get')
+    const getSession = await client.send(
+      {
+        type: 'get',
+        resource: 'session',
+        requestId: 'get-session-req',
+      },
+      'get',
+    )
 
     expect(getSession).toEqual({
       type: 'get',
       requestId: 'get-session-req',
-      resource: ['session'],
+      resource: 'session',
       session: {
         currentGameId: null,
         gameIds: [],
         id: alice.id,
         name: 'Alice',
         username: 'alexa',
-      }
+      },
     } as p.ServerResponse)
   })
 
   it('users can change their passwords', async () => {
     const client = makeClient()
 
-    await client.send({
-      type: 'login',
-      username: 'alice',
-      password: 'password',
-      requestId: 'login-req',
-    }, 'login')
+    await client.send(
+      {
+        type: 'login',
+        username: 'alice',
+        password: 'password',
+        requestId: 'login-req',
+      },
+      'login',
+    )
 
-    await client.send({
-      type: 'set-password',
-      newPassword: 'PASSWORD',
-      currentPassword: 'password',
-      requestId: 'set-password',
-    }, 'success')
+    await client.send(
+      {
+        type: 'set-password',
+        newPassword: 'PASSWORD',
+        currentPassword: 'password',
+        requestId: 'set-password',
+      },
+      'success',
+    )
 
-    await client.send({
-      type: 'logout',
-      requestId: 'logout-req',
-    }, 'success')
+    await client.send(
+      {
+        type: 'logout',
+        requestId: 'logout-req',
+      },
+      'success',
+    )
 
-    await client.send({
-      type: 'login',
-      username: 'alice',
-      password: 'PASSWORD',
-      requestId: 'login-req-2',
-    }, 'login')
+    await client.send(
+      {
+        type: 'login',
+        username: 'alice',
+        password: 'PASSWORD',
+        requestId: 'login-req-2',
+      },
+      'login',
+    )
   })
 })

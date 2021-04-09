@@ -300,7 +300,7 @@ export const GameHandler = inject(
 
         case 'get': {
           const { requestId, resource } = message
-          switch (resource[0]) {
+          switch (resource) {
             case 'session': {
               const user = await users.get(session.userId)
 
@@ -323,32 +323,32 @@ export const GameHandler = inject(
               }
             }
 
-            case 'contents': {
-              if (resource.length === 1) {
-                const list = await contents.list()
-                return {
-                  type: 'get',
-                  resource,
-                  requestId,
-                  list,
-                }
-              } else {
-                const content: ContentSet | undefined = await contents.get(
-                  resource[1],
-                )
-                if (!content) {
-                  return failure(message, 'not-found')
-                }
-                return {
-                  type: 'get',
-                  resource,
-                  requestId,
-                  content,
-                }
+            case 'content-list': {
+              const list = await contents.list()
+              return {
+                type: 'get',
+                resource,
+                requestId,
+                list,
               }
             }
 
-            case 'games': {
+            case 'content-set': {
+              const content: ContentSet | undefined = await contents.get(
+                resource[1],
+              )
+              if (!content) {
+                return failure(message, 'not-found')
+              }
+              return {
+                type: 'get',
+                resource,
+                requestId,
+                content,
+              }
+            }
+
+            case 'game': {
               const user = await users.get(session.userId)
 
               if (!user) {

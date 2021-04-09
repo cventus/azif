@@ -25,7 +25,9 @@ export class TestClient {
     this.ws = new WebSocket(url)
 
     let onOpen: () => void
-    this.awaitOpen = new Promise<void>((resolve) => { onOpen = resolve })
+    this.awaitOpen = new Promise<void>((resolve) => {
+      onOpen = resolve
+    })
 
     this.ws.on('open', () => onOpen())
 
@@ -61,7 +63,9 @@ export class TestClient {
     return message
   }
 
-  public async receiveNotification(clock: number): Promise<ServerGameNotification> {
+  public async receiveNotification(
+    clock: number,
+  ): Promise<ServerGameNotification> {
     let message: ServerGameNotification
     if (this.events[clock]) {
       message = this.events[clock]
@@ -73,8 +77,6 @@ export class TestClient {
     return message
   }
 
-
-
   public async send<T extends ServerMessage['type']>(
     message: ClientRequest & { requestId: string },
     type?: T,
@@ -85,7 +87,7 @@ export class TestClient {
       new Promise<ServerResponse>((_, reject) =>
         setTimeout(() => {
           reject(new Error(`Request ${message.requestId} timed out after 1s`))
-        }, 1000)
+        }, 1000),
       ),
       this.receive(message.requestId),
     ])
