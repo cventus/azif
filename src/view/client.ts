@@ -3,6 +3,7 @@ import { Middleware } from 'redux'
 import { ClientSocket, RequestTimeoutError } from './ClientSocket'
 import { Action } from './ducks/actions'
 
+export const SocketContext = React.createContext<ClientSocket | undefined>(undefined)
 
 export const clientMiddleware: (socket: ClientSocket) => Middleware = (
   socket,
