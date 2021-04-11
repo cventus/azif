@@ -9,6 +9,7 @@ import AuthenticationContainer from './AuthenticationContainer'
 import GamesContainer from './GamesContainer'
 import SettingsContainer from './SettingsContainer'
 import GameEventsContainer from './GameEventsContainer'
+import NewGameContainer from './NewGameContainer'
 
 interface AppProps {
   history: History
@@ -21,6 +22,7 @@ const MainViewState = withVisualState(MainView, [
   'games',
   'settings',
   'game',
+  'new-game',
   'authenticate',
 ])
 
@@ -40,6 +42,7 @@ const App: React.FC<AppProps> = ({ history }) => {
             <>
               {states.includes('authenticate') && <AuthenticationContainer />}
               {(states.includes('front') || states.includes('games')) && <GamesContainer />}
+              {states.includes('new-game') && <NewGameContainer />}
               {states.includes('settings') && <SettingsContainer />}
               {states.includes('game') && <GameEventsContainer />}
             </>

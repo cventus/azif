@@ -8,6 +8,7 @@ import {
   isGameCharactersPage,
   isGameEventsPage,
   isGamesPage,
+  isNewGamePage,
   isSettingsPage,
 } from '../paths'
 
@@ -17,6 +18,10 @@ interface FrontPage {
 
 interface GamesPage {
   pageId: 'games'
+}
+
+interface NewGamePage {
+  pageId: 'new-game'
 }
 
 interface SettingsPage {
@@ -39,18 +44,22 @@ interface GameCharacterPage {
 type Page =
   | FrontPage
   | GamesPage
+  | NewGamePage
   | SettingsPage
   | GameEventsPage
   | GameCharacterPage
 
 function getPage(location: Location): Page | undefined {
   const path = location.pathname
-  console.log('location', location)
+
   if (isFrontPage(path)) {
     return { pageId: 'front' }
   }
   if (isGamesPage(path)) {
     return { pageId: 'games' }
+  }
+  if (isNewGamePage(path)) {
+    return { pageId: 'new-game' }
   }
   if (isSettingsPage(path)) {
     return { pageId: 'settings' }
