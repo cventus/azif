@@ -1,10 +1,45 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { toGameEventsPage, toSettingsPage } from '../paths'
+import { GameState } from '../../game/resources'
+import { getGame } from '../ducks/connection'
+import { toGameEventsPage, toNewGamePage, toSettingsPage } from '../paths'
+import { useDispatch, useSelector } from '../store'
 
-interface GamesContainerProps {}
+const GamePreview: React.FC<{ game?: GameState }> = React.memo(({ game }) => {
 
-export const GamesContainer: React.FC<GamesContainerProps> = ({}) => {
+  if (!game) {
+    return (<p>Loading...</p>)
+  }
+
+  const createdAt = new Date(game.createdAt).toDateString
+
+  return (
+    <li>
+      <div>
+        <Link to={toGameEventsPage(game.id)}>{game.name}</Link>
+      </div>
+      <div>
+        {createdAt}
+      </div>
+    </li>
+  )
+})
+
+export const GamesContainer: React.FC = () => {
+  const dispatch = useDispatch()
+  const session = useSelector(state => state.session)
+  const allGames = useSelector(state => state.game.games)
+
+  const gameIds = session.state ? session.state.gameIds : []
+
+  useEffect(() => {
+    gameIds.forEach((gameId) => {
+      if (!allGames[gameId]) {
+        dispatch(getGame(gameId))
+      }
+    })
+  })
+
   return (
     <div>
       <nav>
@@ -18,19 +53,11 @@ export const GamesContainer: React.FC<GamesContainerProps> = ({}) => {
       <main>
         <h1>Games</h1>
         <ol>
-          <li>
-            <Link to={toGameEventsPage('game-1')}>Game 1</Link>
-          </li>
-          <li>
-            <Link to={toGameEventsPage('game-2')}>Game 2</Link>
-          </li>
-          <li>
-            <Link to={toGameEventsPage('game-3')}>Game 3</Link>
-          </li>
-          <li>
-            <Link to={toGameEventsPage('game-4')}>Game 4</Link>
-          </li>
+          {
+            gameIds.map((gameId, i) => (<GamePreview key={gameId} game={allGames[gameId]} />))
+          }
         </ol>
+        <Link to={toNewGamePage()} type="button">New Game</Link>
       </main>
     </div>
   )
