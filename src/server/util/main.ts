@@ -12,6 +12,8 @@ import { DDBSessionsService } from '../sessions/DDBSessionsService'
 import { DDBUsersService } from '../users/DDBUsersService'
 
 import AWSDynamoDB from 'aws-sdk/clients/dynamodb'
+import { readFileSync } from 'fs'
+import { isContentSet } from '../../game/resources'
 
 const getEnv = (name: string, fallback?: string): string => {
   const value = process.env[name]
@@ -66,6 +68,28 @@ const main = async (argv: string[]): Promise<void> => {
       const params = JSON.parse(argv[1])
       const users = app.get('UsersService')
       users.createUser(params.name, params.credentials)
+      break
+    }
+
+    case 'set-content': {
+      const [, ...files] = argv
+
+      const sets = files.map((file) => {
+        try {
+          const contents = readFileSync(file).toString('utf-8')
+          const json = JSON.parse(contents)
+          if (!isContentSet(json)) {
+            throw new Error('Invalid JSON')
+          }
+          return json
+        } catch (err) {
+          err.file = file
+          throw err
+        }
+      })
+
+      const content = app.get('ContentService')
+      await content.defineContent(sets)
       break
     }
 

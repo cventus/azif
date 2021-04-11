@@ -23,6 +23,7 @@ export const ContentSet = {
   cards: Dictionary(Card),
 }
 export type ContentSet = StructureType<typeof ContentSet>
+export const isContentSet = validate(ContentSet)
 
 export const GameEvent = {
   gameId: String,
