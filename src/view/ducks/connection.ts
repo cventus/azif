@@ -32,6 +32,44 @@ export const connection = defineActions('connection', {
   }),
 })
 
+export const getGame = (gameId: string, options?: SendOptions): Action => ({
+  type: 'connection/request',
+  options,
+  request: {
+    type: 'get',
+    resource: 'game',
+    gameId,
+  }
+})
+
+export const getSession = (options?: SendOptions): Action => ({
+  type: 'connection/request',
+  options,
+  request: {
+    type: 'get',
+    resource: 'session',
+  }
+})
+
+export const getContentSet = (contentSetId: string, options?: SendOptions): Action => ({
+  type: 'connection/request',
+  options,
+  request: {
+    type: 'get',
+    resource: 'content-set',
+    contentSetId,
+  }
+})
+
+export const getContentList = (options?: SendOptions): Action => ({
+  type: 'connection/request',
+  options,
+  request: {
+    type: 'get',
+    resource: 'content-list',
+  }
+})
+
 export interface ConnectionState {
   status: ConnectionStatus
 }

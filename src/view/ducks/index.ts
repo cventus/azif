@@ -11,7 +11,6 @@ import view from './view'
 import session from './session'
 
 // export action creators
-export { content } from './content'
 export { game } from './game'
 export { messages } from './messages'
 export { connection } from './connection'

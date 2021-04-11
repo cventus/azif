@@ -1,28 +1,14 @@
 import { Reducer } from 'redux'
-import {
-  Card,
-  CharacterCard,
-  ConditionCard,
-  isCharacterCard,
-  isConditionCard,
-} from '../../game/rules'
+import { ContentSet, ContentSetPreview } from '../../game/resources'
 import { Action } from './actions'
-import { defineActions } from './lib'
-
-export const content = defineActions('content', {
-  defineCard: (card: Card) => ({ card }),
-})
 
 export interface ContentState {
-  cards: Record<string, Card>
-  characters: Record<string, CharacterCard>
-  conditions: Record<string, ConditionCard>
+  previews?: ContentSetPreview[],
+  sets: Record<string, ContentSet>,
 }
 
 const defaultState: ContentState = {
-  cards: {},
-  characters: {},
-  conditions: {},
+  sets: {},
 }
 
 const reducer: Reducer<ContentState, Action> = (
@@ -30,16 +16,28 @@ const reducer: Reducer<ContentState, Action> = (
   action: Action = { type: undefined },
 ) => {
   switch (action.type) {
-    case 'content/defineCard': {
-      const { card } = action
-      let { cards, characters, conditions } = state
-      if (isCharacterCard(card)) {
-        characters = { ...characters, [card.id]: card }
-      } else if (isConditionCard(card)) {
-        conditions = { ...conditions, [card.id]: card }
+    case 'connection/response': {
+      if (action.status === 'ok') {
+        const { response } = action
+        if (response.type === 'get') {
+          if (response.resource === 'content-set') {
+            const set = response.content
+            return {
+              ...state,
+              sets: {
+                ...state.sets,
+                [set.id]: set,
+              }
+            }
+          } else if (response.resource === 'content-list') {
+            return {
+              ...state,
+              previews: response.list
+            }
+          }
+        }
+        return state
       }
-      cards = { ...cards, [card.id]: card }
-      return { cards, conditions, characters }
     }
 
     default:
