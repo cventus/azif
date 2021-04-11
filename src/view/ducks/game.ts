@@ -1,45 +1,58 @@
 import { Reducer } from 'redux'
-import {
-  CharacterCard,
-  HorrorCard,
-  DamageCard,
-  ItemCard,
-  ConditionCard,
-} from '../../game/rules'
+import { GameState } from '../../game/resources'
 import { Action } from './actions'
-import { defineActions } from './lib'
 
-export const game = defineActions('game', {
-  startNewGame: (players: Player[]) => ({ players }),
-})
-
-interface Player {
-  id: string
-  character: CharacterCard
-  horrors: HorrorCard[]
-  damages: DamageCard[]
-  clues: number
-  inventory: ItemCard[]
-  conditions: ConditionCard[]
+export type GamesState = {
+  current: string | null,
+  games: Record<string, GameState>
 }
 
-export interface GameState {
-  players: Player[]
+const defaultState: GamesState = {
+  current: null,
+  games: {},
 }
 
-const defaultState: GameState = {
-  players: [],
+const updateGame = (state: GamesState, game: GameState): GamesState => {
+  const currentGame = state.games[game.id]
+  if (!currentGame || currentGame.clock < game.clock) {
+    return {
+      ...state,
+      games: {
+        ...state.games,
+        [game.id]: game,
+      }
+    }
+  } else {
+    return state
+  }
 }
 
-const reducer: Reducer<GameState, Action> = (
+const reducer: Reducer<GamesState, Action> = (
   state = defaultState,
   action = { type: undefined },
 ) => {
   switch (action.type) {
-    case 'game/startNewGame':
-      return {
-        players: action.players,
+    case 'connection/response':
+      if (action.status === 'ok') {
+        switch (action.response.type) {
+          case 'get':
+            if (action.response.resource !== 'game') {
+              return state
+            }
+
+          case 'create-game':
+          case 'game-update':
+            return updateGame(state, action.response.game)
+
+        }
       }
+      return state
+
+    case 'connection/notification':
+      if (action.notification.type === 'game-event') {
+        return updateGame(state, action.notification.game)
+      }
+      return state
 
     default:
       return state

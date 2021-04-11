@@ -1,6 +1,5 @@
 import { connection } from './connection'
 import { messages } from './messages'
-import { game } from './game'
 import { LocationChangeAction } from 'connected-react-router'
 
 type ActionTypesOf<
@@ -12,5 +11,4 @@ export type Action =
   | { type: undefined }
   | ActionTypesOf<typeof connection>
   | ActionTypesOf<typeof messages>
-  | ActionTypesOf<typeof game>
   | LocationChangeAction
