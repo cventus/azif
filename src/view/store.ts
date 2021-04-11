@@ -16,6 +16,7 @@ import createReducer from './ducks'
 import { Action } from './ducks/actions'
 import { routerMiddleware } from 'connected-react-router'
 import { clientMiddleware } from './client'
+import { ClientSocket } from './ClientSocket'
 
 export type State = ReducerState<ReturnType<typeof createReducer>>
 export type Dispatch = ReturnType<typeof createStore>[0]['dispatch']
@@ -30,16 +31,11 @@ export const useSelector: <T>(
 ) => T = useGenericSelector
 
 export default function createStore(
+  socket: ClientSocket,
   initialState?: State,
 ): [Store<State, Action>, History] {
   const history = createBrowserHistory()
   const reducer = createReducer(history)
-
-  const socketConfig = {
-    loginUrl: 'http://localhost:3001/ws',
-    logoutUrl: 'http://localhost:3001/ws',
-    openSocketUrl: 'ws://localhost:3001/ws',
-  }
 
   const store = createReduxStore(
     reducer,
@@ -47,7 +43,7 @@ export default function createStore(
     compose(
       applyMiddleware(
         routerMiddleware(history),
-        clientMiddleware(socketConfig),
+        clientMiddleware(socket),
       ),
     ),
   )

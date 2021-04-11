@@ -1,12 +1,12 @@
+import React from 'react'
 import { Middleware } from 'redux'
-import { ClientSocket, ClientConfig, RequestTimeoutError } from './ClientSocket'
+import { ClientSocket, RequestTimeoutError } from './ClientSocket'
 import { Action } from './ducks/actions'
 
-export const clientMiddleware: (config: ClientConfig) => Middleware = (
-  config,
-) => ({ dispatch }) => {
-  const socket = new ClientSocket(config)
 
+export const clientMiddleware: (socket: ClientSocket) => Middleware = (
+  socket,
+) => ({ dispatch }) => {
   socket.onNotification = (notification) => {
     dispatch({
       type: 'connection/notification',
@@ -22,7 +22,6 @@ export const clientMiddleware: (config: ClientConfig) => Middleware = (
   }
 
   return (next) => async (action: Action) => {
-    console.log(action)
     switch (action.type) {
       case 'connection/request': {
         try {

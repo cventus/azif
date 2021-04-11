@@ -141,8 +141,8 @@ export class ClientSocket {
             resolve(json)
           }
         }
-      } catch (e: unknown) {
-        console.log(e)
+      } catch (err: unknown) {
+        console.error(err)
       }
     })
 
