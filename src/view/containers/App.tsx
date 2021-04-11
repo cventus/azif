@@ -21,12 +21,13 @@ const MainViewState = withVisualState(MainView, [
   'games',
   'settings',
   'game',
-  'unknown',
+  'authenticate',
 ])
 
 const App: React.FC<AppProps> = ({ history }) => {
   const page = useSelector((state) => state.view.page)
-  const currentPage = page ? page.pageId : 'unknown'
+  const session = useSelector((state) => state.session.state)
+  const currentPage = !session ? 'authenticate' : page ? page.pageId : 'front'
 
   console.log(currentPage)
 
@@ -37,8 +38,8 @@ const App: React.FC<AppProps> = ({ history }) => {
           const states = [state, from, to]
           return (
             <>
-              {states.includes('front') && <AuthenticationContainer />}
-              {states.includes('games') && <GamesContainer />}
+              {states.includes('authenticate') && <AuthenticationContainer />}
+              {(states.includes('front') || states.includes('games')) && <GamesContainer />}
               {states.includes('settings') && <SettingsContainer />}
               {states.includes('game') && <GameEventsContainer />}
             </>

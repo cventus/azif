@@ -31,15 +31,21 @@ const LoginForm = () => {
 
   return (
     <form onSubmit={login}>
-      <label>
-        Username
-        <input type="text" ref={usernameRef} name="username" />
-      </label>
-      <label>
-        Password
-        <input type="text" ref={passwordRef} name="username" />
-      </label>
-      <input type="submit" value="Login" />
+      <p>
+        <label>
+          Username
+          <input type="text" ref={usernameRef} name="username" />
+        </label>
+      </p>
+      <p>
+        <label>
+          Password
+          <input type="text" ref={passwordRef} name="password" />
+        </label>
+      </p>
+      <p>
+        <input type="submit" value="Login" />
+      </p>
     </form>
   )
 }
