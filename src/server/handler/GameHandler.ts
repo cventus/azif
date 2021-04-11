@@ -299,8 +299,8 @@ export const GameHandler = inject(
         }
 
         case 'get': {
-          const { requestId, resource } = message
-          switch (resource) {
+          const { requestId } = message
+          switch (message.resource) {
             case 'session': {
               const user = await users.get(session.userId)
 
@@ -314,7 +314,7 @@ export const GameHandler = inject(
 
               return {
                 type: 'get',
-                resource,
+                resource: message.resource,
                 requestId,
                 session: {
                   currentGameId: session.gameId,
@@ -327,7 +327,7 @@ export const GameHandler = inject(
               const list = await contents.list()
               return {
                 type: 'get',
-                resource,
+                resource: message.resource,
                 requestId,
                 list,
               }
@@ -335,14 +335,14 @@ export const GameHandler = inject(
 
             case 'content-set': {
               const content: ContentSet | undefined = await contents.get(
-                resource[1],
+                message.contentSetId,
               )
               if (!content) {
                 return failure(message, 'not-found')
               }
               return {
                 type: 'get',
-                resource,
+                resource: message.resource,
                 requestId,
                 content,
               }
@@ -358,7 +358,7 @@ export const GameHandler = inject(
                 )
                 return failure(message, 'system-inconsistency')
               }
-              const gameId = resource[1]
+              const { gameId } = message
 
               if (!user.gameIds.includes(gameId)) {
                 return failure(message, 'not-found')
@@ -372,7 +372,7 @@ export const GameHandler = inject(
 
               return {
                 type: 'get',
-                resource,
+                resource: message.resource,
                 requestId: message.requestId,
                 game,
               }
