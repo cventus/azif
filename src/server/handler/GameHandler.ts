@@ -142,7 +142,7 @@ export const GameHandler = inject(
           ) {
             return failure(message, 'bad-auth')
           }
-          await users.setUsername(session.userId, message.newName)
+          await users.setName(session.userId, message.newName)
           return success(message)
         }
 
