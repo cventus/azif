@@ -41,11 +41,11 @@ type VisualStateComponent =
 // transitions.
 export function withVisualState<
   Component extends VisualStateComponent,
-  State extends string,
+  State,
   Properties = ComponentProps<Component>
 >(
   InnerComponent: Component,
-  states?: State[],
+  isSameState: (a: State, b: State) => boolean,
 ): RenderVisualState<Properties, State> {
   const result: RenderVisualState<Properties, State> = (props) => {
     const {
@@ -65,9 +65,10 @@ export function withVisualState<
       if (ref.current) {
         style = window.getComputedStyle(ref.current)
       }
-      const needsToTransition = current.state !== desiredState
+      const needsToTransition = !isSameState(current.state, desiredState)
       if (needsToTransition) {
-        const isTransitioning = current.from || current.to
+        const isTransitioning =
+          current.from !== undefined || current.to !== undefined
         if (isTransitioning) {
           let isInstant = true
           if (style) {

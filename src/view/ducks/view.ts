@@ -41,7 +41,7 @@ interface GameCharacterPage {
   characterId: string
 }
 
-type Page =
+export type Page =
   | FrontPage
   | GamesPage
   | NewGamePage

@@ -92,7 +92,10 @@ const FlipCard = styled.article`
   }
 `
 
-const AnimatedFlipCard = withVisualState(FlipCard, ['face-up', 'face-down'])
+const AnimatedFlipCard = withVisualState(
+  FlipCard,
+  (a: CardFacing, b: CardFacing) => a === b,
+)
 
 type CardFacing = 'face-up' | 'face-down'
 
@@ -168,7 +171,7 @@ const ItemDetails = ({ item, defaultFacing = 'face-up' }: ItemDetailsProps) => {
 
   const canFlip = Boolean(item.backface)
 
-  if (item.backface) {
+  if (canFlip) {
     return (
       <AnimatedFlipCard onClick={onClick} state={facing}>
         {({ state }) => (

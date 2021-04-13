@@ -10,6 +10,7 @@ import GamesContainer from './GamesContainer'
 import SettingsContainer from './SettingsContainer'
 import GameEventsContainer from './GameEventsContainer'
 import NewGameContainer from './NewGameContainer'
+import { Page } from '../ducks/view'
 
 interface AppProps {
   history: History
@@ -17,19 +18,32 @@ interface AppProps {
 
 export const MainView = styled.main``
 
-const MainViewState = withVisualState(MainView, [
-  'front',
-  'games',
-  'settings',
-  'game',
-  'new-game',
-  'authenticate',
-])
+type TopLevelPage = Page | { pageId: 'authenticate' }
+
+const isPage = <PageId extends string>(tag: PageId) => (
+  page: TopLevelPage | undefined,
+): page is TopLevelPage & { pageId: PageId } => {
+  return page ? page.pageId === tag : false
+}
+
+const isAuthtenticationPage = isPage('authenticate')
+const isFrontPage = isPage('front')
+const isGamesPage = isPage('games')
+const isNewGamePage = isPage('new-game')
+const isSettingsPage = isPage('settings')
+const isGamePage = isPage('game')
+
+const MainViewState = withVisualState(
+  MainView,
+  (a: TopLevelPage, b: TopLevelPage) => a.pageId === b.pageId,
+)
 
 const App: React.FC<AppProps> = ({ history }) => {
   const page = useSelector((state) => state.view.page)
   const session = useSelector((state) => state.session.state)
-  const currentPage = !session ? 'authenticate' : page ? page.pageId : 'front'
+  const currentPage: TopLevelPage = !session
+    ? { pageId: 'authenticate' }
+    : page || { pageId: 'front' }
 
   console.log(currentPage)
 
@@ -38,15 +52,21 @@ const App: React.FC<AppProps> = ({ history }) => {
       <MainViewState state={currentPage}>
         {({ state, from, to }) => {
           const states = [state, from, to]
+
+          const authenticate = states.find(isAuthtenticationPage)
+          const front = states.find(isFrontPage)
+          const games = states.find(isGamesPage)
+          const newGame = states.find(isNewGamePage)
+          const settings = states.find(isSettingsPage)
+          const game = states.find(isGamePage)
+
           return (
             <>
-              {states.includes('authenticate') && <AuthenticationContainer />}
-              {(states.includes('front') || states.includes('games')) && (
-                <GamesContainer />
-              )}
-              {states.includes('new-game') && <NewGameContainer />}
-              {states.includes('settings') && <SettingsContainer />}
-              {states.includes('game') && <GameEventsContainer />}
+              {authenticate && <AuthenticationContainer />}
+              {(front || games) && <GamesContainer />}
+              {newGame && <NewGameContainer />}
+              {settings && <SettingsContainer />}
+              {game && <GameEventsContainer />}
             </>
           )
         }}
