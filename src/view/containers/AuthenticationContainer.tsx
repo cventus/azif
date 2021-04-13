@@ -1,11 +1,12 @@
-import React, { FormEvent, useCallback, useRef } from 'react'
+import React, { FormEvent, useCallback, useContext, useRef } from 'react'
 import { useDispatch, useSelector } from '../store'
 import { connection } from '../ducks/connection'
+import { SocketContext } from '../ClientSocket'
 
 interface AuthenticationContainerProps {}
 
 const LoginForm = () => {
-  const dispatch = useDispatch()
+  const socket = useContext(SocketContext)
   const usernameRef = useRef<HTMLInputElement>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
 
@@ -16,17 +17,15 @@ const LoginForm = () => {
 
       e.preventDefault()
 
-      if (username && username.value && password && password.value) {
-        dispatch(
-          connection.request({
-            type: 'login',
-            username: username.value,
-            password: password.value,
-          }),
-        )
+      if (socket && username && username.value && password && password.value) {
+        socket.send({
+          type: 'login',
+          username: username.value,
+          password: password.value,
+        })
       }
     },
-    [dispatch, usernameRef, passwordRef],
+    [socket, usernameRef, passwordRef],
   )
 
   return (

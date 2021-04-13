@@ -1,9 +1,15 @@
-import React, { FormEvent, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import React, {
+  FormEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { useDispatch, useSelector } from '../store'
-import { connection, getContentList, getSession } from '../ducks/connection'
 import { ContentSetPreview } from '../../game/resources'
 import { goBack } from 'connected-react-router'
-import { SocketContext } from '../client'
+import { SocketContext } from '../ClientSocket'
 
 const ContentSetItem: React.FC<{
   disabled: boolean
@@ -15,7 +21,13 @@ const ContentSetItem: React.FC<{
   return (
     <div>
       <label htmlFor={name}>
-        <input type="checkbox" name={name} value={set.id} onChange={onChange} disabled={disabled} />
+        <input
+          type="checkbox"
+          name={name}
+          value={set.id}
+          onChange={onChange}
+          disabled={disabled}
+        />
         {set.name}
       </label>
     </div>
@@ -54,7 +66,7 @@ const NewGameForm: React.FC<{
 
       let name: string = ''
       const contentSets: string[] = []
-      
+
       for (let i = 0; i < inputs.length; i++) {
         const input = inputs.item(i)
         if (!input) {
@@ -92,12 +104,24 @@ const NewGameForm: React.FC<{
       <p>
         <label>
           Name
-          <input type="text" name="name" onChange={resetNameError} disabled={disabled} />
+          <input
+            type="text"
+            name="name"
+            onChange={resetNameError}
+            disabled={disabled}
+          />
         </label>
         {nameError && <p>{nameError}</p>}
       </p>
       <p>
-        {contentSets.map((set) => <ContentSetItem key={set.id} set={set} onChange={resetSetsError} disabled={disabled} />)}
+        {contentSets.map((set) => (
+          <ContentSetItem
+            key={set.id}
+            set={set}
+            onChange={resetSetsError}
+            disabled={disabled}
+          />
+        ))}
       </p>
       {setsError && <p>{setsError}</p>}
       <p>
@@ -110,33 +134,38 @@ const NewGameForm: React.FC<{
 const NewGameContainer: React.FC = () => {
   const dispatch = useDispatch()
 
-  const sets: ContentSetPreview[] | undefined = useSelector(store => store.content.previews)
+  const sets: ContentSetPreview[] | undefined = useSelector(
+    (store) => store.content.previews,
+  )
   const socket = useContext(SocketContext)
   const [isLoading, setLoading] = useState(false)
 
   useEffect(() => {
-    dispatch(getContentList())
+    if (socket) {
+      socket.getContentList()
+    }
   })
 
-  const createGame = useCallback(async (event: CreateGameEvent): Promise<void> => {
-    if (socket) {
-      try {
-        setLoading(true)
-        const response = await socket.send({
-          type: 'create-game',
-          contentSets: event.contentSets,
-          name: event.name,
-        })
-        setLoading(false)
-        if (response.type === 'create-game') {
-          dispatch(getSession())
-          dispatch(goBack())
-        }
-      } catch {
+  const createGame = useCallback(
+    async (event: CreateGameEvent): Promise<void> => {
+      if (socket) {
+        try {
+          setLoading(true)
+          const response = await socket.send({
+            type: 'create-game',
+            contentSets: event.contentSets,
+            name: event.name,
+          })
+          if (response.type === 'create-game') {
+            await socket.getSession()
+            dispatch(goBack())
+          }
+        } catch {}
         setLoading(false)
       }
-    }
-  }, [dispatch, socket])
+    },
+    [dispatch, socket],
+  )
 
   return (
     <NewGameForm

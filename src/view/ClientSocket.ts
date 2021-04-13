@@ -181,20 +181,55 @@ export class ClientSocket {
     })
   }
 
-  async logout(): Promise<void> {
-    try {
-      await fetch(this.config.logoutUrl, {
-        method: 'post',
-        mode: 'no-cors',
-        credentials: 'include',
-      })
-      this.shouldReconnect = false
-      if (this.socket) {
-        this.socket.close()
-        this.socket = undefined
-      }
-    } catch (e) {
-      console.log('Failed to connect', e)
-    }
+  public getGame(
+    gameId: string,
+    options?: SendOptions,
+  ): Promise<ServerResponse> {
+    return this.send(
+      {
+        type: 'get',
+        resource: 'game',
+        gameId,
+      },
+      options,
+    )
+  }
+
+  public getSession(options?: SendOptions): Promise<ServerResponse> {
+    return this.send(
+      {
+        type: 'get',
+        resource: 'session',
+      },
+      options,
+    )
+  }
+
+  public getContentSet(
+    contentSetId: string,
+    options?: SendOptions,
+  ): Promise<ServerResponse> {
+    return this.send(
+      {
+        type: 'get',
+        resource: 'content-set',
+        contentSetId,
+      },
+      options,
+    )
+  }
+
+  public getContentList(options?: SendOptions): Promise<ServerResponse> {
+    return this.send(
+      {
+        type: 'get',
+        resource: 'content-list',
+      },
+      options,
+    )
   }
 }
+
+export const SocketContext = React.createContext<ClientSocket | undefined>(
+  undefined,
+)
