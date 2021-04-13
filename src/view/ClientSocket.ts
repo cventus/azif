@@ -1,3 +1,4 @@
+import React from 'react'
 import {
   ClientRequest,
   ServerResponse,
@@ -10,15 +11,16 @@ export const ConnectionStatus = [
   'connecting',
   'connected',
 ] as const
+export type ConnectionStatus = typeof ConnectionStatus[number]
+
+export type ClientRequestWithId = ClientRequest & { requestId: string }
 
 export class RequestTimeoutError {
-  public readonly request: ClientRequest
-  constructor(request: ClientRequest) {
+  public readonly request: ClientRequestWithId
+  constructor(request: ClientRequestWithId) {
     this.request = request
   }
 }
-
-export type ConnectionStatus = typeof ConnectionStatus[number]
 
 export interface ClientConfig {
   loginUrl: string
@@ -31,13 +33,15 @@ const DefaultTimeout = 5000
 interface PendingRequest {
   resolve: (response: ServerResponse) => void
   reject: (err: unknown) => void
-  request: ClientRequest
+  request: ClientRequestWithId
   timerId: ReturnType<typeof setTimeout>
 }
 
 export interface SendOptions {
   timeout?: number
 }
+
+type ServerError = RequestTimeoutError | unknown
 
 export class ClientSocket {
   constructor(private readonly config: ClientConfig) {
@@ -51,6 +55,12 @@ export class ClientSocket {
   private requestId: number
   private requests: Record<string, PendingRequest>
 
+  public onRequest?: (request: ClientRequest) => void
+  public onResponse?: (request: ClientRequest, response: ServerResponse) => void
+  public onErrorResponse?: (
+    request: ClientRequest,
+    response: ServerError,
+  ) => void
   public onNotification?: (notification: ServerGameNotification) => void
   public onConnectionStatusChange?: (status: ConnectionStatus) => void
 
@@ -65,23 +75,24 @@ export class ClientSocket {
     this.openSocket()
   }
 
-  public send(
+  public async send(
     request: ClientRequest,
     options: SendOptions = {},
   ): Promise<ServerResponse> {
     if (this.socket) {
       const { timeout = DefaultTimeout } = options
       const requestId = String(this.requestId++)
+      const requestWithId = { ...request, requestId }
 
       const timerId = setTimeout(() => {
         const { reject } = this.requests[requestId]
         delete this.requests[requestId]
-        reject(new RequestTimeoutError(request))
+        reject(new RequestTimeoutError(requestWithId))
       }, timeout)
 
       const result = new Promise<ServerResponse>((resolve, reject) => {
         const pendingRequest: PendingRequest = {
-          request,
+          request: requestWithId,
           timerId,
           resolve,
           reject,
@@ -91,12 +102,19 @@ export class ClientSocket {
 
       try {
         // attempt to send
-        this.socket.send(JSON.stringify({ ...request, requestId }))
-        return result
-      } catch (err) {
+        const message = { ...request, requestId }
+        this.socket.send(JSON.stringify(message))
+        if (this.onRequest) {
+          this.onRequest(message)
+        }
+        return await result
+      } catch (err: unknown) {
         clearTimeout(timerId)
         delete this.requests[requestId]
-        return Promise.reject(err)
+        if (this.onErrorResponse) {
+          this.onErrorResponse(requestWithId, err)
+        }
+        throw err
       }
     } else {
       return Promise.reject()
@@ -139,6 +157,9 @@ export class ClientSocket {
             delete this.requests[json.requestId]
             clearTimeout(timerId)
             resolve(json)
+            if (this.onResponse) {
+              this.onResponse(request, json)
+            }
           }
         }
       } catch (err: unknown) {
