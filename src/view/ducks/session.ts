@@ -13,6 +13,11 @@ const reducer: Reducer<{ state?: SessionState }, Action> = (
   const { request, response } = action
 
   switch (response.type) {
+    case 'get':
+      if (response.resource === 'session') {
+        return { state: response.session }
+      }
+      break
     case 'login':
       return { state: response.session }
 

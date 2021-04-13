@@ -3,7 +3,7 @@ import { GameState } from '../../game/resources'
 import { Action } from './actions'
 
 export type GamesState = {
-  current: string | null,
+  current: string | null
   games: Record<string, GameState>
 }
 
@@ -20,7 +20,7 @@ const updateGame = (state: GamesState, game: GameState): GamesState => {
       games: {
         ...state.games,
         [game.id]: game,
-      }
+      },
     }
   } else {
     return state
@@ -43,7 +43,6 @@ const reducer: Reducer<GamesState, Action> = (
           case 'create-game':
           case 'game-update':
             return updateGame(state, action.response.game)
-
         }
       }
       return state

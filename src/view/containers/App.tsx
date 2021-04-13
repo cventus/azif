@@ -41,7 +41,9 @@ const App: React.FC<AppProps> = ({ history }) => {
           return (
             <>
               {states.includes('authenticate') && <AuthenticationContainer />}
-              {(states.includes('front') || states.includes('games')) && <GamesContainer />}
+              {(states.includes('front') || states.includes('games')) && (
+                <GamesContainer />
+              )}
               {states.includes('new-game') && <NewGameContainer />}
               {states.includes('settings') && <SettingsContainer />}
               {states.includes('game') && <GameEventsContainer />}

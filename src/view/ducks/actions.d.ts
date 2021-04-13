@@ -1,6 +1,9 @@
 import { connection } from './connection'
 import { messages } from './messages'
-import { CallHistoryMethodAction, LocationChangeAction } from 'connected-react-router'
+import {
+  CallHistoryMethodAction,
+  LocationChangeAction,
+} from 'connected-react-router'
 
 type ActionTypesOf<
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

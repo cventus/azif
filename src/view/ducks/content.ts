@@ -3,8 +3,8 @@ import { ContentSet, ContentSetPreview } from '../../game/resources'
 import { Action } from './actions'
 
 export interface ContentState {
-  previews?: ContentSetPreview[],
-  sets: Record<string, ContentSet>,
+  previews?: ContentSetPreview[]
+  sets: Record<string, ContentSet>
 }
 
 const defaultState: ContentState = {
@@ -27,12 +27,12 @@ const reducer: Reducer<ContentState, Action> = (
               sets: {
                 ...state.sets,
                 [set.id]: set,
-              }
+              },
             }
           } else if (response.resource === 'content-list') {
             return {
               ...state,
-              previews: response.list
+              previews: response.list,
             }
           }
         }
