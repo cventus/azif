@@ -189,6 +189,13 @@ const ServerLoginResponse = {
 export type ServerLoginResponse = StructureType<typeof ServerLoginResponse>
 export const isServerLoginResponse = validate(ServerLoginResponse)
 
+const ServerSubscribeToGameResponse = {
+  type: Literal('subscribe-to-game'),
+  requestId: String,
+  session: SessionState,
+}
+export type ServerSubscribeToGameResponse = StructureType<typeof ServerSubscribeToGameResponse>
+
 const ServerCreateGameResponse = {
   type: Literal('create-game'),
   requestId: String,
@@ -246,6 +253,7 @@ const ServerResponse = Union(
   ServerSuccessResponse,
   ServerFailureResponse,
   ServerLoginResponse,
+  ServerSubscribeToGameResponse,
   ServerCreateGameResponse,
   ServerGameUpdateResponse,
   ServerGetResponse,

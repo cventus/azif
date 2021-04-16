@@ -22,7 +22,7 @@ import { LoggerService } from '../logger/LoggerService'
 import { SocketsService } from '../sockets/SocketsService'
 import { User } from '../users'
 import { UsersService } from '../users/UsersService'
-import { ContentSet, GameState } from '../../game/resources'
+import { ContentSet, GameState, SessionState } from '../../game/resources'
 import { ContentService } from '../content/ContentService'
 import { EventsService } from '../events/EventsService'
 
@@ -256,8 +256,15 @@ export const GameHandler = inject(
             return failure(message, 'members-only')
           }
 
-          await sessions.subscribeToGame(socketId, gameId)
-          return success(message)
+          const updatedSession = await sessions.subscribeToGame(socketId, gameId)
+          return {
+            type: 'subscribe-to-game',
+            requestId: message.requestId,
+            session: {
+              ...user,
+              currentGameId: updatedSession.gameId,
+            },
+          }
         }
 
         case 'leave-game': {
