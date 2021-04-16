@@ -1,73 +1,140 @@
-import React, { FormEvent, Ref, useCallback, useRef } from 'react'
-import { useDispatch, useSelector } from '../store'
-import { connection } from '../ducks/connection'
+import React, { FormEvent, useCallback, useEffect, useRef, useState } from 'react'
+import { useSelector } from '../store'
 import { DatedMessage } from '../ducks/messages'
+import { ClientSocket } from '../ClientSocket'
+import { GameState, SessionState } from '../../game/resources'
 
-interface GameEventsContainerProps {}
-
-const Hours = (props: { date: Date }) => {
-  const { date } = props
-
+const Hours: React.FC<{ date: Date }> = ({ date }) => {
   const hours = date.getHours().toString().padStart(2, '0')
   const minutes = date.getMinutes().toString().padStart(2, '0')
 
-  return <>{`${hours}:${minutes}`}</>
+  return <>{hours}:{minutes}</>
 }
 
-const GameEventRow = (props: { gameEvent: DatedMessage }) => {
-  const { gameEvent } = props
-
+const GameEventRow: React.FC<{
+  game: GameState,
+  gameEvent: DatedMessage,
+}> = React.memo(({ game, gameEvent }) => {
   return (
     <div>
       <Hours date={gameEvent.date} />
       &nbsp;
+      <span>{gameEvent.clock}</span>
+      &nbsp;
       <span>{gameEvent.action.type}</span>
+      &nbsp;
+      <span>{game.players[gameEvent.playerId].name}</span>
       &nbsp;
       {gameEvent.action.type === 'chat' && <span>{gameEvent.action.text}</span>}
     </div>
   )
-}
+})
 
-export const GameEventsContainer: React.FC<GameEventsContainerProps> = ({}) => {
-  const dispatch = useDispatch()
-  const gameEvents = useSelector((state) => state.messages.gameEvents)
-
-  const inputRef = useRef<HTMLInputElement>()
+const ChatBox: React.FC<{
+  onChat: (text: string) => void
+}> = ({ onChat }) => {
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const sendChat = useCallback(
     (ev: FormEvent) => {
       ev.preventDefault()
       if (inputRef.current) {
         const text = inputRef.current.value
-        if (text.length > 0) {
-          dispatch(
-            connection.request({
-              type: 'action',
-              action: {
-                type: 'chat',
-                text,
-              },
-            }),
-          )
-          inputRef.current.value = ''
-        }
+        onChat(text)
+        inputRef.current.value = ''
       }
     },
-    [dispatch, inputRef],
+    [onChat, inputRef],
   )
+
+  return (
+    <div>
+      <form onSubmit={sendChat}>
+        <input ref={inputRef} name="text" type="text" />
+      </form>
+    </div>
+  )
+}
+
+export const GameEventsContainer: React.FC<{
+  game: GameState
+  socket: ClientSocket
+  session: SessionState
+}> = ({ game, socket }) => {
+  const gameId = game.id
+  const gameEvents = useSelector((state) => state.messages[gameId]) || []
+
+  const [isLoadingEvents, setIsLoadingEvents] = useState(gameEvents.filter(x => !x).length < 20)
+
+  // Load game events
+  useEffect(() => {
+    if (!isLoadingEvents) {
+      return
+    }
+
+    // Look for the most recent unknown event
+    let until = game.clock
+    for (let i = 0; i < game.clock; i++) {
+      const j = game.clock - i
+      if (!gameEvents[j]) {
+        break
+      }
+      until = gameEvents[j].clock
+    }
+
+    // Calculate start of the inclusive range
+    const since = Math.max(until - 20, 0)
+    if (since < until) {
+      socket.send({
+        type: 'get',
+        resource: 'events',
+        gameId,
+        since,
+        until,
+      })
+    }
+    setIsLoadingEvents(false)
+  }, [socket, game, isLoadingEvents, setIsLoadingEvents])
+
+  const sendChat = useCallback(
+    (text: string) => {
+      if (text.length > 0 && socket) {
+        socket.send({
+          type: 'action',
+          action: {
+            type: 'chat',
+            text,
+          },
+        })
+      }
+    },
+    [socket],
+  )
+
+  const loadMoreEvents = useCallback(
+    () => setIsLoadingEvents(true),
+    [setIsLoadingEvents],
+  )
+
+  if (!game) {
+    return null
+  }
 
   return (
     <>
       <div>
-        <form onSubmit={sendChat}>
-          <input ref={inputRef as Ref<HTMLInputElement>} />
-        </form>
+        <ChatBox onChat={sendChat} />
       </div>
       <div>
         {gameEvents.reduceRight((acc, current) => {
-          acc.push(<GameEventRow key={current.clock} gameEvent={current} />)
+          if (current) {
+            acc.push(<GameEventRow key={current.clock} game={game} gameEvent={current} />)
+          }
           return acc
         }, [] as JSX.Element[])}
+      </div>
+      <div>
+        <button onClick={loadMoreEvents}>More</button>
       </div>
     </>
   )

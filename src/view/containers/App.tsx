@@ -8,8 +8,8 @@ import { withVisualState } from '../util/withVisualState'
 import AuthenticationContainer from './AuthenticationContainer'
 import GamesContainer from './GamesContainer'
 import SettingsContainer from './SettingsContainer'
-import GameEventsContainer from './GameEventsContainer'
 import NewGameContainer from './NewGameContainer'
+import GameContainer from './GameContainer'
 import { Page } from '../ducks/view'
 
 interface AppProps {
@@ -66,7 +66,7 @@ const App: React.FC<AppProps> = ({ history }) => {
               {(front || games) && <GamesContainer />}
               {newGame && <NewGameContainer />}
               {settings && <SettingsContainer />}
-              {game && <GameEventsContainer />}
+              {game && <GameContainer gameId={game.gameId} page={game} />}
             </>
           )
         }}
