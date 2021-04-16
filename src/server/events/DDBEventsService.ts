@@ -50,12 +50,18 @@ export const DDBEventsService = inject(
           if (typeof options.since === 'number') {
             queryNames['#clock'] = 'clock'
             queryValues[':since'] = options.since
-            expressions.push('#clock > :since')
+            if (typeof options.until !== 'number') {
+              expressions.push('#clock > :since')
+            }
           }
           if (typeof options.until === 'number') {
             queryNames['#clock'] = 'clock'
             queryValues[':until'] = options.until
-            expressions.push('#clock <= :until')
+            if (typeof options.since === 'number') {
+              expressions.push('#clock BETWEEN :since AND :until')
+            } else {
+              expressions.push('#clock <= :until')
+            }
           }
 
           const { Items: items } = await client

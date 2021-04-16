@@ -24,6 +24,7 @@ import { User } from '../users'
 import { UsersService } from '../users/UsersService'
 import { ContentSet, GameState } from '../../game/resources'
 import { ContentService } from '../content/ContentService'
+import { EventsService } from '../events/EventsService'
 
 interface SocketConnectEvent {
   type: 'connect'
@@ -58,6 +59,7 @@ export const GameHandler = inject(
     SocketsService,
     GameActionsHandler,
     GamesService,
+    EventsService,
     ContentService,
   },
   ({
@@ -67,6 +69,7 @@ export const GameHandler = inject(
     SocketsService: sockets,
     GameActionsHandler: handleAction,
     GamesService: games,
+    EventsService: events,
     ContentService: contents,
   }): GameHandler => {
     const logger = LoggerService.create('GameHandler')
@@ -375,6 +378,32 @@ export const GameHandler = inject(
                 resource: message.resource,
                 requestId: message.requestId,
                 game,
+              }
+            }
+
+            case 'events': {
+              const user = await users.get(session.userId)
+
+              if (!user) {
+                logger.error(
+                  { userId: session.userId },
+                  'Authenticated user not found',
+                )
+                return failure(message, 'system-inconsistency')
+              }
+              const { gameId, since, until } = message
+
+              if (!user.gameIds.includes(gameId)) {
+                return failure(message, 'not-found')
+              }
+
+              const eventList = await events.list(gameId, { since, until })
+              return {
+                type: 'get',
+                resource: 'events',
+                requestId: message.requestId,
+                gameId,
+                events: eventList,
               }
             }
 

@@ -1,4 +1,4 @@
-import { validate, Literal, Union, StructureType, Tuple } from '../structure'
+import { validate, Literal, Union, StructureType, Tuple, Optional } from '../structure'
 import {
   ChatAction,
   DiscardCardAction,
@@ -93,6 +93,13 @@ const ClientGetRequest = Union(
     type: Literal('get'),
     resource: Literal('game'),
     gameId: String,
+  },
+  {
+    type: Literal('get'),
+    resource: Literal('events'),
+    gameId: String,
+    since: Optional(Number),
+    until: Optional(Number),
   },
   {
     type: Literal('get'),
@@ -206,6 +213,13 @@ const ServerGetResponse = Union(
     resource: Literal('game'),
     requestId: String,
     game: GameState,
+  },
+  {
+    type: Literal('get'),
+    resource: Literal('events'),
+    requestId: String,
+    gameId: String,
+    events: Array(GameEvent),
   },
   {
     type: Literal('get'),
