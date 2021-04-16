@@ -7,13 +7,9 @@ export const messages = defineActions('messages', {})
 
 export type DatedMessage = GameEvent & { date: Date }
 
-export interface MessageState {
-  gameEvents: DatedMessage[]
-}
+export type MessageState = Record<string, DatedMessage[]>
 
-const defaultState: MessageState = {
-  gameEvents: [],
-}
+const defaultState: MessageState = {}
 
 const reducer: Reducer<MessageState, Action> = (
   state = defaultState,
@@ -23,17 +19,44 @@ const reducer: Reducer<MessageState, Action> = (
     case 'connection/notification': {
       const serverMessage = action.notification
       if (serverMessage.type === 'game-event') {
+        const gameId = action.notification.game.id
+        const updatedEvents = [...(state[gameId] || [])]
         const gameEvent: DatedMessage = {
           ...serverMessage.event,
           date: new Date(serverMessage.event.epoch),
         }
+        updatedEvents[serverMessage.event.clock] = gameEvent
         return {
           ...state,
-          gameEvents: [...state.gameEvents, gameEvent],
+          [gameId]: updatedEvents,
         }
       } else {
         return state
       }
+    }
+
+    case 'connection/response': {
+      if (action.status !== 'ok') {
+        return state
+      }
+      const { response } = action
+      if (response.type !== 'get' || response.resource !== 'events') {
+        return state
+      }
+
+      const { gameId } = response
+
+        const updatedEvents = [...(state[gameId] || [])]
+        response.events.forEach((e) => {
+          updatedEvents[e.clock] = {
+            ...e,
+            date: new Date(e.epoch),
+          }
+        })
+        return {
+          ...state,
+          [gameId]: updatedEvents,
+        }
     }
 
     default: {
