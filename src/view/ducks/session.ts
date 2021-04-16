@@ -18,6 +18,7 @@ const reducer: Reducer<{ state?: SessionState }, Action> = (
         return { state: response.session }
       }
       break
+    case 'subscribe-to-game':
     case 'login':
       return { state: response.session }
 
