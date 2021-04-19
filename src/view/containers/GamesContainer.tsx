@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react'
+import React, { ChangeEvent, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { GameState } from '../../game/resources'
 import { SocketContext } from '../ClientSocket'
@@ -10,7 +10,7 @@ const GamePreview: React.FC<{ game?: GameState }> = React.memo(({ game }) => {
     return <p>Loading...</p>
   }
 
-  const createdAt = new Date(game.createdAt).toDateString
+  const createdAt = new Date(game.createdAt).toDateString()
 
   return (
     <li>
@@ -26,6 +26,8 @@ export const GamesContainer: React.FC = () => {
   const session = useSelector((state) => state.session)
   const allGames = useSelector((state) => state.game.games)
   const socket = useContext(SocketContext)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [joinGameId, setJoinGameId] = useState<string>('')
 
   const gameIds = session.state ? session.state.gameIds : []
 
@@ -36,6 +38,10 @@ export const GamesContainer: React.FC = () => {
       }
     })
   })
+
+  const onJoinIdChanged = useCallback((ev: ChangeEvent<HTMLInputElement>) => {
+    setJoinGameId(ev.target.value)
+  }, [])
 
   return (
     <div>
@@ -54,9 +60,17 @@ export const GamesContainer: React.FC = () => {
             <GamePreview key={gameId} game={allGames[gameId]} />
           ))}
         </ol>
-        <Link to={toNewGamePage()} type="button">
-          New Game
-        </Link>
+        <div>
+          <Link to={toNewGamePage()} type="button">
+            New Game
+          </Link>
+        </div>
+        <div>
+          <input type="text" ref={inputRef} value={joinGameId} onChange={onJoinIdChanged} />
+          <Link to={toGameEventsPage(joinGameId)} type="button">
+            Join Game
+          </Link>
+        </div>
       </main>
     </div>
   )
