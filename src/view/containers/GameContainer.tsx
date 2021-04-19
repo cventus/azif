@@ -17,6 +17,18 @@ export const GameContainer: React.FC<{
   // Load game
   useEffect(() => {
     if (socket) {
+      if (!session?.gameIds.includes(gameId)) {
+        socket.send({
+          type: 'join-game',
+          gameId,
+        }).then(() => {
+          socket.send({
+            type: 'get',
+            resource: 'game',
+            gameId,
+          })
+        })
+      }
       if (!game) {
         socket.send({
           type: 'get',
