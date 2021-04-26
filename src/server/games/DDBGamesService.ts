@@ -94,7 +94,7 @@ const itemToGameState = (item: GameItem): PartialGameState => {
   }, {} as Record<string, PartialPlayerState>)
 
   return {
-    id: item.id,
+    id: item.id.substr('game:'.length),
     name: item.name,
     phase: item.phase,
     createdAt: item.createdAt,
@@ -123,7 +123,7 @@ const toGameState = (
   return itemToGameState(item)
 }
 
-const gameKey = (gameId: string) => ({ id: gameId })
+const gameKey = (gameId: string) => ({ id: `game:${gameId}` })
 const and = (...conditions: string[]): string => conditions.join(' and ')
 
 // Keep game alive for three months after the last (successful) action
@@ -134,7 +134,7 @@ export const GameTableActions = (TableName: string) => ({
     return {
       TableName,
       Item: {
-        id: gameId,
+        ...gameKey(gameId),
         name,
         phase: Phases.Starting,
         sets,
@@ -508,7 +508,7 @@ export const DDBGamesService = inject(
     const service: GamesService = LoggerService.traceMethods(logger, {
       async createGame(name, contentSetIds) {
         try {
-          const id = `game:${await generateId()}`
+          const id = await generateId()
           const action = actions.createGame(
             id,
             name,
@@ -573,7 +573,7 @@ export const DDBGamesService = inject(
         const { Item: item } = await client
           .get({
             TableName: TableConfig.tables.games,
-            Key: { id: gameId },
+            Key: gameKey(gameId),
             ConsistentRead: true,
           })
           .promise()

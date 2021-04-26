@@ -111,6 +111,7 @@ describe('WebSocket protocol', () => {
         type: 'login',
         requestId: 'login-req',
         session: {
+          id: alice.id,
           currentGameId: null,
           gameIds: [],
           name: 'Alice',
@@ -176,7 +177,7 @@ describe('WebSocket protocol', () => {
         type: 'create-game',
         requestId: 'create-game-req',
         game: expect.objectContaining({
-          id: expect.stringMatching(/^game:/),
+          id: expect.stringMatching(/./),
           characters: {},
           clock: 1,
           contentSetIds: [defaultContentPreview.id],
@@ -241,7 +242,7 @@ describe('WebSocket protocol', () => {
         gameId: game.id,
         requestId: 'subscribe',
       },
-      'success',
+      'subscribe-to-game',
     )
 
     await bobClient.send(
@@ -259,7 +260,7 @@ describe('WebSocket protocol', () => {
         gameId: game.id,
         requestId: 'subscribe',
       },
-      'success',
+      'subscribe-to-game',
     )
 
     await aliceClient.send(
