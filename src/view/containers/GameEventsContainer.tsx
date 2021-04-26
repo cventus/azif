@@ -127,6 +127,20 @@ export const GameEventsContainer: React.FC<{
     setIsLoadingEvents,
   ])
 
+  const rollSome = (n: number) => (): void => void socket.send({
+    type: 'action',
+    action: {
+      type: 'dice',
+      roll: new Array(n).fill(null)
+    }
+  })
+
+  const rollOne = useCallback(rollSome(1), [socket])
+  const rollTwo = useCallback(rollSome(2), [socket])
+  const rollThree = useCallback(rollSome(3), [socket])
+  const rollFour = useCallback(rollSome(4), [socket])
+  const rollFive = useCallback(rollSome(5), [socket])
+
   if (!game) {
     return null
   }
@@ -135,6 +149,15 @@ export const GameEventsContainer: React.FC<{
     <>
       <div>
         <ChatBox onChat={sendChat} />
+      </div>
+      <div>
+        Roll:
+        <button onClick={rollOne}>1</button>
+        <button onClick={rollTwo}>2</button>
+        <button onClick={rollThree}>3</button>
+        <button onClick={rollFour}>4</button>
+        <button onClick={rollFive}>5</button>
+        <button>+</button>
       </div>
       <div>
         {gameEvents.reduceRight((acc, current) => {
