@@ -69,6 +69,7 @@ export const GameState = {
 export type GameState = StructureType<typeof GameState>
 
 export const SessionState = {
+  id: String,
   name: String,
   username: String,
   gameIds: Array(String),

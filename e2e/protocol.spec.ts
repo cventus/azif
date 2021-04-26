@@ -137,6 +137,7 @@ describe('WebSocket protocol', () => {
       type: 'login',
       requestId: 'login-req',
       session: {
+        id: alice.id,
         currentGameId: null,
         gameIds: [],
         name: 'Alice',

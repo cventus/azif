@@ -498,6 +498,7 @@ export const GameHandler = inject(
               type: 'login',
               requestId: message.requestId,
               session: {
+                id: user.id,
                 name: user.name,
                 currentGameId: null,
                 gameIds: user.gameIds,
