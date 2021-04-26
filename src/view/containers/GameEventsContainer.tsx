@@ -1,4 +1,10 @@
-import React, { FormEvent, useCallback, useEffect, useRef, useState } from 'react'
+import React, {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { useSelector } from '../store'
 import { DatedMessage } from '../ducks/messages'
 import { ClientSocket } from '../ClientSocket'
@@ -8,12 +14,16 @@ const Hours: React.FC<{ date: Date }> = ({ date }) => {
   const hours = date.getHours().toString().padStart(2, '0')
   const minutes = date.getMinutes().toString().padStart(2, '0')
 
-  return <>{hours}:{minutes}</>
+  return (
+    <>
+      {hours}:{minutes}
+    </>
+  )
 }
 
 const GameEventRow: React.FC<{
-  game: GameState,
-  gameEvent: DatedMessage,
+  game: GameState
+  gameEvent: DatedMessage
 }> = React.memo(({ game, gameEvent }) => {
   return (
     <div>
@@ -64,7 +74,9 @@ export const GameEventsContainer: React.FC<{
   const gameId = game.id
   const gameEvents = useSelector((state) => state.messages[gameId]) || []
 
-  const [isLoadingEvents, setIsLoadingEvents] = useState(gameEvents.filter(x => !x).length < 20)
+  const [isLoadingEvents, setIsLoadingEvents] = useState(
+    gameEvents.filter((x) => !x).length < 20,
+  )
 
   // Load game events
   useEffect(() => {
@@ -111,10 +123,9 @@ export const GameEventsContainer: React.FC<{
     [socket],
   )
 
-  const loadMoreEvents = useCallback(
-    () => setIsLoadingEvents(true),
-    [setIsLoadingEvents],
-  )
+  const loadMoreEvents = useCallback(() => setIsLoadingEvents(true), [
+    setIsLoadingEvents,
+  ])
 
   if (!game) {
     return null
@@ -128,7 +139,13 @@ export const GameEventsContainer: React.FC<{
       <div>
         {gameEvents.reduceRight((acc, current) => {
           if (current) {
-            acc.push(<GameEventRow key={current.clock} game={game} gameEvent={current} />)
+            acc.push(
+              <GameEventRow
+                key={current.clock}
+                game={game}
+                gameEvent={current}
+              />,
+            )
           }
           return acc
         }, [] as JSX.Element[])}

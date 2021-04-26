@@ -1,4 +1,11 @@
-import React, { ChangeEvent, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import React, {
+  ChangeEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { Link } from 'react-router-dom'
 import { GameState } from '../../game/resources'
 import { SocketContext } from '../ClientSocket'
@@ -66,7 +73,12 @@ export const GamesContainer: React.FC = () => {
           </Link>
         </div>
         <div>
-          <input type="text" ref={inputRef} value={joinGameId} onChange={onJoinIdChanged} />
+          <input
+            type="text"
+            ref={inputRef}
+            value={joinGameId}
+            onChange={onJoinIdChanged}
+          />
           <Link to={toGamePage(joinGameId)} type="button">
             Join Game
           </Link>

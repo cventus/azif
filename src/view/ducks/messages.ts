@@ -46,17 +46,17 @@ const reducer: Reducer<MessageState, Action> = (
 
       const { gameId } = response
 
-        const updatedEvents = [...(state[gameId] || [])]
-        response.events.forEach((e) => {
-          updatedEvents[e.clock] = {
-            ...e,
-            date: new Date(e.epoch),
-          }
-        })
-        return {
-          ...state,
-          [gameId]: updatedEvents,
+      const updatedEvents = [...(state[gameId] || [])]
+      response.events.forEach((e) => {
+        updatedEvents[e.clock] = {
+          ...e,
+          date: new Date(e.epoch),
         }
+      })
+      return {
+        ...state,
+        [gameId]: updatedEvents,
+      }
     }
 
     default: {

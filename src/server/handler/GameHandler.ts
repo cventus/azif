@@ -256,7 +256,10 @@ export const GameHandler = inject(
             return failure(message, 'members-only')
           }
 
-          const updatedSession = await sessions.subscribeToGame(socketId, gameId)
+          const updatedSession = await sessions.subscribeToGame(
+            socketId,
+            gameId,
+          )
           return {
             type: 'subscribe-to-game',
             requestId: message.requestId,

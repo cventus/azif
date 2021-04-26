@@ -15,28 +15,33 @@ export const GameStarting: React.FC<{
   content: Record<string, ContentSet>
   socket: ClientSocket
 }> = ({ game, session, content, socket }) => {
-  const onSelectCharacter = useCallback((characterId: string) => {
-    const isSelected = Object.values(game.players).map((p) => p.characterId).includes(characterId)
-    const oldCharacterId = game.players[session.id].characterId || null
-    if (!isSelected) {
-      socket.send({
-        type: 'action',
-        action: {
-          type: 'switch-character',
-          playerId: session.id,
-          newCharacter: characterId,
-          oldCharacter: oldCharacterId,
-        }
-      })
-    }
-  }, [socket, game, session])
+  const onSelectCharacter = useCallback(
+    (characterId: string) => {
+      const isSelected = Object.values(game.players)
+        .map((p) => p.characterId)
+        .includes(characterId)
+      const oldCharacterId = game.players[session.id].characterId || null
+      if (!isSelected) {
+        socket.send({
+          type: 'action',
+          action: {
+            type: 'switch-character',
+            playerId: session.id,
+            newCharacter: characterId,
+            oldCharacter: oldCharacterId,
+          },
+        })
+      }
+    },
+    [socket, game, session],
+  )
 
   const onStartGame = useCallback(() => {
     socket.send({
       type: 'action',
       action: {
         type: 'start-game',
-      }
+      },
     })
   }, [socket])
 
@@ -53,7 +58,9 @@ export const GameStarting: React.FC<{
         content={content}
         onSelectCharacter={onSelectCharacter}
       />
-      <button onClick={onStartGame} disabled={!canStartGame}>Start</button>
+      <button onClick={onStartGame} disabled={!canStartGame}>
+        Start
+      </button>
     </>
   )
 }
@@ -63,7 +70,9 @@ export const GameContainer: React.FC<{
   page: GamePage
 }> = ({ gameId, page }) => {
   const socket = useContext(SocketContext)
-  const game: GameState | undefined = useSelector((state) => state.game.games[gameId]) 
+  const game: GameState | undefined = useSelector(
+    (state) => state.game.games[gameId],
+  )
   const session = useSelector((state) => state.session.state)
   const currentGameId = session?.currentGameId
   const content = useSelector((state) => state.content.sets)
@@ -73,16 +82,18 @@ export const GameContainer: React.FC<{
   useEffect(() => {
     if (socket) {
       if (!session?.gameIds.includes(gameId)) {
-        socket.send({
-          type: 'join-game',
-          gameId,
-        }).then(() => {
-          socket.send({
-            type: 'get',
-            resource: 'game',
+        socket
+          .send({
+            type: 'join-game',
             gameId,
           })
-        })
+          .then(() => {
+            socket.send({
+              type: 'get',
+              resource: 'game',
+              gameId,
+            })
+          })
       }
       if (!game) {
         socket.send({
@@ -117,7 +128,7 @@ export const GameContainer: React.FC<{
           type: 'subscribe-to-game',
           gameId,
         })
-      } 
+      }
     }
   })
 
@@ -127,16 +138,18 @@ export const GameContainer: React.FC<{
     }
   }, [dispatch, game && game.phase, page.subPageId])
 
-  if (!game || !socket || !session || session.currentGameId !== gameId) {
+  if (!game || !socket || !session || session.currentGameId !== gameId) {
     return null
   }
   if (game.phase === 'starting') {
-    return <GameStarting
-      game={game}
-      socket={socket}
-      session={session}
-      content={content}
-    />
+    return (
+      <GameStarting
+        game={game}
+        socket={socket}
+        session={session}
+        content={content}
+      />
+    )
   }
 
   return <GameEventsContainer game={game} socket={socket} session={session} />

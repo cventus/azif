@@ -1,4 +1,11 @@
-import { validate, Literal, Union, StructureType, Tuple, Optional } from '../structure'
+import {
+  validate,
+  Literal,
+  Union,
+  StructureType,
+  Tuple,
+  Optional,
+} from '../structure'
 import {
   ChatAction,
   DiscardCardAction,
@@ -198,7 +205,9 @@ const ServerSubscribeToGameResponse = {
   requestId: String,
   session: SessionState,
 }
-export type ServerSubscribeToGameResponse = StructureType<typeof ServerSubscribeToGameResponse>
+export type ServerSubscribeToGameResponse = StructureType<
+  typeof ServerSubscribeToGameResponse
+>
 
 const ServerCreateGameResponse = {
   type: Literal('create-game'),

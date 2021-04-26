@@ -48,17 +48,9 @@ interface GameCharacterPage {
   characterId: string
 }
 
-export type GamePage =
-  | GameStartPage
-  | GameEventsPage
-  | GameCharacterPage
+export type GamePage = GameStartPage | GameEventsPage | GameCharacterPage
 
-export type Page =
-  | FrontPage
-  | GamesPage
-  | NewGamePage
-  | SettingsPage
-  | GamePage
+export type Page = FrontPage | GamesPage | NewGamePage | SettingsPage | GamePage
 
 function getPage(location: Location): Page | undefined {
   const path = location.pathname
@@ -90,7 +82,7 @@ function getPage(location: Location): Page | undefined {
     const [gameId] = game
     return { pageId: 'game', subPageId: 'start', gameId }
   }
- 
+
   return undefined
 }
 
