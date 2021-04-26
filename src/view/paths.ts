@@ -72,6 +72,11 @@ export const {
 } = AppEndpoint('games', 'new')
 
 export const {
+  build: toGamePage, //
+  match: isGamePage,
+} = AppEndpoint('games', String)
+
+export const {
   build: toGameEventsPage, //
   match: isGameEventsPage,
 } = AppEndpoint('games', String, 'events')

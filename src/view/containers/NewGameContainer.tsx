@@ -20,7 +20,7 @@ const ContentSetItem: React.FC<{
 
   return (
     <div>
-      <label htmlFor={name}>
+      <label>
         <input
           type="checkbox"
           name={name}

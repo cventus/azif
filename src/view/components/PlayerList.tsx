@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 import { GameState } from '../../game/resources'
-import { toGameEventsPage } from '../paths'
+import { toGamePage } from '../paths'
 
 const baseUrl = window.location.protocol + '//' + window.location.host
 
@@ -8,7 +8,7 @@ const PlayerList: React.FC<{
   game: GameState
 }> = ({ game }) => {
 
-  const link = baseUrl + toGameEventsPage(game.id)
+  const link = baseUrl + toGamePage(game.id)
 
   const copyToClipboard = useCallback(() => {
     navigator.clipboard.writeText(link)

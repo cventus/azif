@@ -7,6 +7,7 @@ import {
   isFrontPage,
   isGameCharactersPage,
   isGameEventsPage,
+  isGamePage,
   isGamesPage,
   isNewGamePage,
   isSettingsPage,
@@ -28,6 +29,12 @@ interface SettingsPage {
   pageId: 'settings'
 }
 
+interface GameStartPage {
+  pageId: 'game'
+  gameId: string
+  subPageId: 'start'
+}
+
 interface GameEventsPage {
   pageId: 'game'
   subPageId: 'events'
@@ -41,13 +48,17 @@ interface GameCharacterPage {
   characterId: string
 }
 
+export type GamePage =
+  | GameStartPage
+  | GameEventsPage
+  | GameCharacterPage
+
 export type Page =
   | FrontPage
   | GamesPage
   | NewGamePage
   | SettingsPage
-  | GameEventsPage
-  | GameCharacterPage
+  | GamePage
 
 function getPage(location: Location): Page | undefined {
   const path = location.pathname
@@ -74,6 +85,12 @@ function getPage(location: Location): Page | undefined {
     const [gameId, characterId] = gameCharacter
     return { pageId: 'game', subPageId: 'character', gameId, characterId }
   }
+  const game = isGamePage(path)
+  if (game) {
+    const [gameId] = game
+    return { pageId: 'game', subPageId: 'start', gameId }
+  }
+ 
   return undefined
 }
 

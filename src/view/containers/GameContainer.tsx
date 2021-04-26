@@ -1,11 +1,13 @@
 import React, { useCallback, useContext, useEffect } from 'react'
-import { useSelector } from '../store'
+import { useDispatch, useSelector } from '../store'
 import { ClientSocket, SocketContext } from '../ClientSocket'
 import { ContentSet, GameState, SessionState } from '../../game/resources'
 import GameEventsContainer from './GameEventsContainer'
-import { Page } from '../ducks/view'
+import { GamePage, Page } from '../ducks/view'
 import CharacterSelectionList from '../components/CharacterSelectionList'
 import PlayerList from '../components/PlayerList'
+import { replace } from 'connected-react-router'
+import { toGameEventsPage } from '../paths'
 
 export const GameStarting: React.FC<{
   game: GameState
@@ -58,13 +60,14 @@ export const GameStarting: React.FC<{
 
 export const GameContainer: React.FC<{
   gameId: string
-  page: Page & { pageId: 'game' }
-}> = ({ gameId }) => {
+  page: GamePage
+}> = ({ gameId, page }) => {
   const socket = useContext(SocketContext)
   const game: GameState | undefined = useSelector((state) => state.game.games[gameId]) 
   const session = useSelector((state) => state.session.state)
   const currentGameId = session?.currentGameId
   const content = useSelector((state) => state.content.sets)
+  const dispatch = useDispatch()
 
   // Load game
   useEffect(() => {
@@ -118,18 +121,25 @@ export const GameContainer: React.FC<{
     }
   })
 
+  useEffect(() => {
+    if (page.subPageId === 'start' && game && game.phase !== 'starting') {
+      dispatch(replace(toGameEventsPage(page.gameId)))
+    }
+  }, [dispatch, game && game.phase, page.subPageId])
+
   if (!game || !socket || !session || session.currentGameId !== gameId) {
     return null
-  } else if (game.phase === 'starting') {
+  }
+  if (game.phase === 'starting') {
     return <GameStarting
       game={game}
       socket={socket}
       session={session}
       content={content}
     />
-  } else {
-    return <GameEventsContainer game={game} socket={socket} session={session} />
   }
+
+  return <GameEventsContainer game={game} socket={socket} session={session} />
 }
 
 export default GameContainer

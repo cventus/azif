@@ -2,7 +2,7 @@ import React, { ChangeEvent, useCallback, useContext, useEffect, useRef, useStat
 import { Link } from 'react-router-dom'
 import { GameState } from '../../game/resources'
 import { SocketContext } from '../ClientSocket'
-import { toGameEventsPage, toNewGamePage, toSettingsPage } from '../paths'
+import { toGamePage, toNewGamePage, toSettingsPage } from '../paths'
 import { useSelector } from '../store'
 
 const GamePreview: React.FC<{ game?: GameState }> = React.memo(({ game }) => {
@@ -15,7 +15,7 @@ const GamePreview: React.FC<{ game?: GameState }> = React.memo(({ game }) => {
   return (
     <li>
       <div>
-        <Link to={toGameEventsPage(game.id)}>{game.name}</Link>
+        <Link to={toGamePage(game.id)}>{game.name}</Link>
       </div>
       <div>{createdAt}</div>
     </li>
@@ -67,7 +67,7 @@ export const GamesContainer: React.FC = () => {
         </div>
         <div>
           <input type="text" ref={inputRef} value={joinGameId} onChange={onJoinIdChanged} />
-          <Link to={toGameEventsPage(joinGameId)} type="button">
+          <Link to={toGamePage(joinGameId)} type="button">
             Join Game
           </Link>
         </div>
