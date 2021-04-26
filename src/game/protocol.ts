@@ -4,9 +4,11 @@ import {
   DiscardCardAction,
   DrawCardAction,
   DropCardAction,
+  EndGameAction,
   FlipCardAction,
   RemoveConditionAction,
   SetConditionAction,
+  StartGameAction,
   SwitchCharacterAction,
   TradeCardAction,
 } from './actions'
@@ -26,6 +28,8 @@ const PlayerDiceAction = {
 export type PlayerDiceAction = StructureType<typeof PlayerDiceAction>
 
 const PlayerAction = Union(
+  StartGameAction,
+  EndGameAction,
   ChatAction,
   PlayerDiceAction,
   SwitchCharacterAction,

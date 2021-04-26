@@ -4,6 +4,16 @@ import { DieRoll } from './dice'
 export const Facing = Union(Literal('face-up'), Literal('face-down'))
 export type Facing = StructureType<typeof Facing>
 
+export const StartGameAction = {
+  type: Literal('start-game'),
+}
+export type StartGameAction = StructureType<typeof StartGameAction>
+
+export const EndGameAction = {
+  type: Literal('end-game'),
+}
+export type EndGameAction = StructureType<typeof EndGameAction>
+
 export const ChatAction = {
   type: Literal('chat'),
   text: String,
@@ -87,6 +97,8 @@ export const DiscardCardAction = {
 export type DiscardCardAction = StructureType<typeof DiscardCardAction>
 
 export const GameAction = Union(
+  StartGameAction,
+  EndGameAction,
   ChatAction,
   DiceAction,
   AddPlayerAction,

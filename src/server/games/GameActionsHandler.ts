@@ -75,6 +75,16 @@ export const GameActionsHandler = inject(
         return writeEvent(action, update)
       }
 
+      case 'start-game': {
+        const update = states.startGame(gameId)
+        return writeEvent(action, update)
+      }
+
+      case 'end-game': {
+        const update = states.endGame(gameId)
+        return writeEvent(action, update)
+      }
+
       case 'chat':
         if (action.text.length > MAX_CHAT) {
           return Failure
