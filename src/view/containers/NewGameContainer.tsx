@@ -142,7 +142,9 @@ const NewGameContainer: React.FC = () => {
 
   useEffect(() => {
     if (socket) {
-      socket.getContentList()
+      if (!sets) {
+        socket.getContentList()
+      }
     }
   })
 
