@@ -1,8 +1,8 @@
-type URIComponent = string | typeof String
+type URIComponent = string | typeof String | RegExp
 
 type Matches<T> = T extends readonly [string, ...infer Rest]
   ? Matches<Rest>
-  : T extends readonly [typeof String, ...infer Rest]
+  : T extends readonly [typeof String | RegExp, ...infer Rest]
   ? [string, ...Matches<Rest>]
   : []
 
@@ -25,15 +25,22 @@ export const AppEndpoint = <Path extends [...URIComponent[]]>(
       return undefined
     }
     const result = []
-    const [, ...components] = pathname.split('/')
-    console.log('components', components)
+    const [, ...components] = pathname.replace(/\/$/, '').split('/')
     if (components.length !== matchPath.length) {
       return undefined
     }
     for (let i = 0; i < matchPath.length; i++) {
-      if (matchPath[i] === String) {
-        result.push(decodeURIComponent(components[i]))
-      } else if (matchPath[i] !== components[i]) {
+      const part = matchPath[i]
+      const component = decodeURIComponent(components[i])
+      if (part === String) {
+        result.push(component)
+      } else if (part instanceof RegExp) {
+        if (part.test(component)) {
+          result.push(component)
+        } else {
+          return undefined
+        }
+      } else if (part !== component) {
         return undefined
       }
     }
@@ -43,18 +50,37 @@ export const AppEndpoint = <Path extends [...URIComponent[]]>(
     const result = []
     let j = 0
     for (let i = 0; i < matchPath.length; i++) {
-      if (matchPath[i] === String) {
-        result.push(encodeURIComponent(params[j]))
-        j++
+      const part = matchPath[i]
+      if (typeof part === 'string') {
+        result.push(encodeURIComponent(part))
+      } else if (params.length <= j) {
+        const n = matchPath.filter((part) => typeof part !== 'string').length
+        throw new Error(`Expected ${n} parameters, got only ${params.length}`)
       } else {
-        result.push(matchPath[i])
+        const component = encodeURIComponent(params[j])
+        if (component === '') {
+          throw new Error(`parameter ${j} is empty`)
+        }
+        if (part instanceof RegExp && !part.test(component)) {
+          throw new Error(
+            `${JSON.stringify(component)} did not match ${part.toString}`,
+          )
+        }
+        result.push(component)
+        j++
       }
     }
     return '/' + result.join('/')
   },
 })
 
-export const { build: toFrontPage, match: isFrontPage } = AppEndpoint('')
+// Anything but literally "new"
+const GameId = /^(?!new$)/
+
+export const {
+  build: toFrontPage, //
+  match: isFrontPage,
+} = AppEndpoint()
 
 export const {
   build: toSettingsPage, //
@@ -74,14 +100,29 @@ export const {
 export const {
   build: toGamePage, //
   match: isGamePage,
-} = AppEndpoint('games', String)
+} = AppEndpoint('games', GameId)
+
+export const {
+  build: toGameLobbyPage, //
+  match: isGameLobbyPage,
+} = AppEndpoint('games', GameId, 'lobby')
+
+export const {
+  build: toSelectCharacterPage, //
+  match: isSelectCharacterPage,
+} = AppEndpoint('games', GameId, 'lobby', 'characters')
+
+export const {
+  build: toSelectCharacterDetailPage, //
+  match: isSelectCharacterDetailPage,
+} = AppEndpoint('games', GameId, 'lobby', 'characters', String)
 
 export const {
   build: toGameEventsPage, //
   match: isGameEventsPage,
-} = AppEndpoint('games', String, 'events')
+} = AppEndpoint('games', GameId, 'events')
 
 export const {
-  build: toGameCharactersPage,
+  build: toGameCharactersPage, //
   match: isGameCharactersPage,
-} = AppEndpoint('games', String, 'characters', String)
+} = AppEndpoint('games', GameId, 'characters', String)

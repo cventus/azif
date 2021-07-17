@@ -7,6 +7,9 @@ import {
   isFrontPage,
   isGameCharactersPage,
   isGameEventsPage,
+  isGameLobbyPage,
+  isSelectCharacterPage,
+  isSelectCharacterDetailPage,
   isGamePage,
   isGamesPage,
   isNewGamePage,
@@ -35,6 +38,19 @@ interface GameStartPage {
   subPageId: 'start'
 }
 
+interface GameLobbyPage {
+  pageId: 'game'
+  subPageId: 'lobby'
+  gameId: string
+}
+
+interface GameSelectCharacterPage {
+  pageId: 'game'
+  subPageId: 'select-character'
+  gameId: string
+  characterId: string | null
+}
+
 interface GameEventsPage {
   pageId: 'game'
   subPageId: 'events'
@@ -48,42 +64,74 @@ interface GameCharacterPage {
   characterId: string
 }
 
-export type GamePage = GameStartPage | GameEventsPage | GameCharacterPage
+export type GamePage =
+  | GameStartPage
+  | GameLobbyPage
+  | GameSelectCharacterPage
+  | GameEventsPage
+  | GameCharacterPage
 
 export type Page = FrontPage | GamesPage | NewGamePage | SettingsPage | GamePage
+
+const matchPage = <T extends [...any[]]>(
+  matcher: (path: string) => T | undefined,
+  toPage: (...args: T) => Page,
+) => (path: string): Page | undefined => {
+  const match = matcher(path)
+  if (match) {
+    return toPage(...match)
+  }
+}
+
+const pageMatchers = [
+  matchPage(isFrontPage, () => ({ pageId: 'front' })),
+  matchPage(isGamesPage, () => ({ pageId: 'games' })),
+  matchPage(isNewGamePage, () => ({ pageId: 'new-game' })),
+  matchPage(isSettingsPage, () => ({ pageId: 'settings' })),
+  matchPage(isGameLobbyPage, (gameId) => ({
+    pageId: 'game',
+    subPageId: 'lobby',
+    gameId,
+  })),
+  matchPage(isSelectCharacterPage, (gameId) => ({
+    pageId: 'game',
+    subPageId: 'select-character',
+    gameId,
+    characterId: null,
+  })),
+  matchPage(isSelectCharacterDetailPage, (gameId, characterId) => ({
+    pageId: 'game',
+    subPageId: 'select-character',
+    gameId,
+    characterId,
+  })),
+  matchPage(isGameEventsPage, (gameId) => ({
+    pageId: 'game',
+    subPageId: 'events',
+    gameId,
+  })),
+  matchPage(isGameCharactersPage, (gameId, characterId) => ({
+    pageId: 'game',
+    subPageId: 'character',
+    gameId,
+    characterId,
+  })),
+  matchPage(isGamePage, (gameId) => ({
+    pageId: 'game',
+    subPageId: 'start',
+    gameId,
+  })),
+]
 
 function getPage(location: Location): Page | undefined {
   const path = location.pathname
 
-  if (isFrontPage(path)) {
-    return { pageId: 'front' }
+  for (const matcher of pageMatchers) {
+    const match = matcher(path)
+    if (match) {
+      return match
+    }
   }
-  if (isGamesPage(path)) {
-    return { pageId: 'games' }
-  }
-  if (isNewGamePage(path)) {
-    return { pageId: 'new-game' }
-  }
-  if (isSettingsPage(path)) {
-    return { pageId: 'settings' }
-  }
-  const gameEvents = isGameEventsPage(path)
-  if (gameEvents) {
-    const [gameId] = gameEvents
-    return { pageId: 'game', subPageId: 'events', gameId }
-  }
-  const gameCharacter = isGameCharactersPage(path)
-  if (gameCharacter) {
-    const [gameId, characterId] = gameCharacter
-    return { pageId: 'game', subPageId: 'character', gameId, characterId }
-  }
-  const game = isGamePage(path)
-  if (game) {
-    const [gameId] = game
-    return { pageId: 'game', subPageId: 'start', gameId }
-  }
-
-  return undefined
 }
 
 export interface ViewState {
