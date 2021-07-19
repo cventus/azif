@@ -59,6 +59,7 @@
     "aws-sdk": "^2.824.0",
     "bufferutil": "^4.0.3",
     "connected-react-router": "^6.8.0",
+    "fast-equals": "^2.0.3",
     "history": "^4.7.2",
     "pino": "^6.11.1",
     "react": "^17.0.1",

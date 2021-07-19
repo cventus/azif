@@ -33,10 +33,7 @@ const isNewGamePage = isPage('new-game')
 const isSettingsPage = isPage('settings')
 const isGamePage = isPage('game')
 
-const MainViewState = withVisualState(
-  MainView,
-  (a: TopLevelPage, b: TopLevelPage) => a.pageId === b.pageId,
-)
+const MainViewState = withVisualState(MainView, (a: TopLevelPage) => a.pageId)
 
 const App: React.FC<AppProps> = ({ history }) => {
   const page = useSelector((state) => state.view.page)

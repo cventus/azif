@@ -12,6 +12,8 @@ import {
   useState,
 } from 'react'
 
+import { deepEqual } from 'fast-equals'
+
 interface VisualState<S> {
   state: S
   from?: S
@@ -45,7 +47,7 @@ export function withVisualState<
   Properties = ComponentProps<Component>
 >(
   InnerComponent: Component,
-  isSameState: (a: State, b: State) => boolean,
+  stateName: (a: State) => string,
 ): RenderVisualState<Properties, State> {
   const result: RenderVisualState<Properties, State> = (props) => {
     const {
@@ -61,16 +63,17 @@ export function withVisualState<
 
     // After render, check if we need to transition
     useLayoutEffect(() => {
-      let style: CSSStyleDeclaration | undefined
-      if (ref.current) {
-        style = window.getComputedStyle(ref.current)
-      }
-      const needsToTransition = !isSameState(current.state, desiredState)
+      const needsToTransition =
+        stateName(current.state) !== stateName(desiredState)
       if (needsToTransition) {
         const isTransitioning =
           current.from !== undefined || current.to !== undefined
         if (isTransitioning) {
           let isInstant = true
+          let style: CSSStyleDeclaration | undefined
+          if (ref.current) {
+            style = window.getComputedStyle(ref.current)
+          }
           if (style) {
             // We assume that an animation has been set on the element as an
             // effect of the transition. Otherwise, immediately jump to the next
@@ -88,6 +91,11 @@ export function withVisualState<
             state: current.state,
           })
         }
+      } else if (!deepEqual(current.state, desiredState)) {
+        setCurrent({
+          ...current,
+          state: desiredState,
+        })
       }
     }, [current, desiredState, ref])
 
@@ -108,9 +116,9 @@ export function withVisualState<
     )
 
     // Apply animation state classes
-    const fromClass = current.from && `FROM_${current.from}`
-    const toClass = current.to && `TO_${current.to}`
-    const stateClass = current.state && `STATE_${current.state}`
+    const fromClass = current.from && `FROM_${stateName(current.from)}`
+    const toClass = current.to && `TO_${stateName(current.to)}`
+    const stateClass = current.state && `STATE_${stateName(current.state)}`
     const className = [fromClass, stateClass, toClass]
       .filter((x) => Boolean(x))
       .join(' ')
