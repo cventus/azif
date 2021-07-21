@@ -79,7 +79,10 @@ export const GamesContainer: React.FC = () => {
             value={joinGameId}
             onChange={onJoinIdChanged}
           />
-          <Link to={toGamePage(joinGameId)} type="button">
+          <Link
+            to={joinGameId.length > 0 ? toGamePage(joinGameId) : '#'}
+            type="button"
+          >
             Join Game
           </Link>
         </div>
