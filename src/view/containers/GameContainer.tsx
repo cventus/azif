@@ -1,113 +1,62 @@
-import React, { useCallback, useContext, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from '../store'
-import { ClientSocket, SocketContext } from '../ClientSocket'
-import { ContentSet, GameState, SessionState } from '../../game/resources'
-import GameEventsContainer from './GameEventsContainer'
-import { GamePage, Page } from '../ducks/view'
-import CharacterSelectionList from '../components/CharacterSelectionList'
-import PlayerList from '../components/PlayerList'
+import { ClientSocket } from '../ClientSocket'
+import { GameState, SessionState } from '../../game/resources'
+import EventsContainer from './game/EventsContainer'
+import { GamePage } from '../ducks/view'
 import { replace } from 'connected-react-router'
-import { toGameEventsPage } from '../paths'
+import { toGameEventsPage, toGameLobbyPage } from '../paths'
+import styled from 'styled-components'
+import { withVisualState } from '../util/withVisualState'
+import LobbyContainer from './game/LobbyContainer'
+import CharacterSelectionContainer from './game/CharacterSelectionContainer'
+import CharacterContainer from './game/CharacterContainer'
 
-export const GameStarting: React.FC<{
-  game: GameState
-  session: SessionState
-  content: Record<string, ContentSet>
-  socket: ClientSocket
-}> = ({ game, session, content, socket }) => {
-  const onSelectCharacter = useCallback(
-    (characterId: string) => {
-      const isSelected = Object.values(game.players)
-        .map((p) => p.characterId)
-        .includes(characterId)
-      const oldCharacterId = game.players[session.id].characterId || null
-      if (!isSelected) {
-        socket.send({
-          type: 'action',
-          action: {
-            type: 'switch-character',
-            playerId: session.id,
-            newCharacter: characterId,
-            oldCharacter: oldCharacterId,
-          },
-        })
-      }
-    },
-    [socket, game, session],
-  )
+const GameView = styled.article``
 
-  const onStartGame = useCallback(() => {
-    socket.send({
-      type: 'action',
-      action: {
-        type: 'start-game',
-      },
-    })
-  }, [socket])
-
-  const canStartGame = Object.values(game.players).every((p) => p.characterId)
-
-  return (
-    <>
-      <h1>{game.name}</h1>
-      <PlayerList game={game} />
-      <h1>Select character</h1>
-      <CharacterSelectionList
-        game={game}
-        session={session}
-        content={content}
-        onSelectCharacter={onSelectCharacter}
-      />
-      <button onClick={onStartGame} disabled={!canStartGame}>
-        Start
-      </button>
-    </>
-  )
-}
+const GameViewState = withVisualState(GameView, (a: GamePage) => a.subPageId)
 
 export const GameContainer: React.FC<{
   gameId: string
+  socket: ClientSocket
+  session: SessionState
   page: GamePage
-}> = ({ gameId, page }) => {
-  const socket = useContext(SocketContext)
+}> = ({ gameId, socket, session, page }) => {
   const game: GameState | undefined = useSelector(
     (state) => state.game.games[gameId],
   )
-  const session = useSelector((state) => state.session.state)
-  const currentGameId = session?.currentGameId
+  const currentGameId = session.currentGameId
   const content = useSelector((state) => state.content.sets)
   const dispatch = useDispatch()
 
   // Load game
   useEffect(() => {
-    if (socket) {
-      if (!session?.gameIds.includes(gameId)) {
-        socket
-          .send({
-            type: 'join-game',
-            gameId,
-          })
-          .then(() => {
-            socket.send({
-              type: 'get',
-              resource: 'game',
-              gameId,
-            })
-          })
-      }
-      if (!game) {
-        socket.send({
-          type: 'get',
-          resource: 'game',
+    if (!session.gameIds.includes(gameId)) {
+      socket
+        .send({
+          type: 'join-game',
           gameId,
         })
-      }
+        .then(() => {
+          socket.send({
+            type: 'get',
+            resource: 'game',
+            gameId,
+          })
+        })
     }
-  }, [socket, !game, session?.gameIds, gameId])
+    if (!game) {
+      socket.send({
+        type: 'get',
+        resource: 'game',
+        gameId,
+      })
+    }
+  }, [socket, !game, session.gameIds, gameId])
 
   // Load content sets
   useEffect(() => {
-    if (socket && game && game.contentSetIds) {
+    if (game && game.contentSetIds) {
       for (const contentSetId of game.contentSetIds) {
         if (!(contentSetId in content)) {
           socket.send({
@@ -118,41 +67,74 @@ export const GameContainer: React.FC<{
         }
       }
     }
-  }, [socket, game && game.contentSetIds])
+  }, [game && game.contentSetIds])
 
   // Subscribe to game
   useEffect(() => {
-    if (socket) {
-      if (currentGameId !== gameId) {
-        socket.send({
-          type: 'subscribe-to-game',
-          gameId,
-        })
-      }
+    if (currentGameId !== gameId) {
+      socket.send({
+        type: 'subscribe-to-game',
+        gameId,
+      })
     }
   })
 
+  // Redirect from game root path to specific page
   useEffect(() => {
-    if (page.subPageId === 'start' && game && game.phase !== 'starting') {
-      dispatch(replace(toGameEventsPage(page.gameId)))
+    if (page.subPageId === 'start' && game) {
+      if (game.phase === 'starting') {
+        dispatch(replace(toGameLobbyPage(game.id)))
+      } else {
+        dispatch(replace(toGameEventsPage(game.id)))
+      }
     }
-  }, [dispatch, game && game.phase, page.subPageId])
+  }, [dispatch, game, page.subPageId])
 
-  if (!game || !socket || !session || session.currentGameId !== gameId) {
+  // Check that everything is loaded
+  if (!game || session.currentGameId !== gameId) {
     return null
   }
-  if (game.phase === 'starting') {
-    return (
-      <GameStarting
-        game={game}
-        socket={socket}
-        session={session}
-        content={content}
-      />
-    )
-  }
 
-  return <GameEventsContainer game={game} socket={socket} session={session} />
+  // Render current game view
+  return (
+    <GameViewState state={page}>
+      {({ state, from, to }) => {
+        const states = [state, from, to]
+
+        const lobby = states.find((p) => p?.subPageId === 'lobby')
+        const selectCharacter = states.find(
+          (p) => p?.subPageId === 'select-character',
+        )
+        const events = states.find((p) => p?.subPageId === 'events')
+        const character = states.find((p) => p?.subPageId === 'character')
+
+        return (
+          <>
+            {lobby && (
+              <LobbyContainer game={game} socket={socket} session={session} />
+            )}
+            {selectCharacter && (
+              <CharacterSelectionContainer
+                game={game}
+                socket={socket}
+                session={session}
+              />
+            )}
+            {events && (
+              <EventsContainer game={game} socket={socket} session={session} />
+            )}
+            {character && (
+              <CharacterContainer
+                game={game}
+                socket={socket}
+                session={session}
+              />
+            )}
+          </>
+        )
+      }}
+    </GameViewState>
+  )
 }
 
 export default GameContainer

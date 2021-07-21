@@ -1,5 +1,5 @@
 import { hot } from 'react-hot-loader/root'
-import React from 'react'
+import React, { useContext } from 'react'
 import { History } from 'history'
 import { ConnectedRouter } from 'connected-react-router'
 import { useSelector } from './../store'
@@ -11,6 +11,7 @@ import SettingsContainer from './SettingsContainer'
 import NewGameContainer from './NewGameContainer'
 import GameContainer from './GameContainer'
 import { Page } from '../ducks/view'
+import { SocketContext } from '../ClientSocket'
 
 interface AppProps {
   history: History
@@ -38,11 +39,10 @@ const MainViewState = withVisualState(MainView, (a: TopLevelPage) => a.pageId)
 const App: React.FC<AppProps> = ({ history }) => {
   const page = useSelector((state) => state.view.page)
   const session = useSelector((state) => state.session.state)
+  const socket = useContext(SocketContext)
   const currentPage: TopLevelPage = !session
     ? { pageId: 'authenticate' }
     : page || { pageId: 'front' }
-
-  console.log(currentPage)
 
   return (
     <ConnectedRouter history={history}>
@@ -63,7 +63,14 @@ const App: React.FC<AppProps> = ({ history }) => {
               {(front || games) && <GamesContainer />}
               {newGame && <NewGameContainer />}
               {settings && <SettingsContainer />}
-              {game && <GameContainer gameId={game.gameId} page={game} />}
+              {game && socket && session && (
+                <GameContainer
+                  gameId={game.gameId}
+                  socket={socket}
+                  session={session}
+                  page={game}
+                />
+              )}
             </>
           )
         }}

@@ -5,10 +5,12 @@ import React, {
   useRef,
   useState,
 } from 'react'
-import { useSelector } from '../store'
-import { DatedMessage } from '../ducks/messages'
-import { ClientSocket } from '../ClientSocket'
-import { GameState, SessionState } from '../../game/resources'
+import { useSelector } from '../../store'
+import { DatedMessage } from '../../ducks/messages'
+import { ClientSocket } from '../../ClientSocket'
+import { GameState, SessionState } from '../../../game/resources'
+import { GameAction } from '../../../game/actions'
+import styled from 'styled-components'
 
 const Hours: React.FC<{ date: Date }> = ({ date }) => {
   const hours = date.getHours().toString().padStart(2, '0')
@@ -21,10 +23,116 @@ const Hours: React.FC<{ date: Date }> = ({ date }) => {
   )
 }
 
+const getAuthor = (game: GameState, event: DatedMessage): string =>
+  game.players[event.playerId].name
+
+const EventContainer = styled.div`
+  display: flex;
+`
+
+const EventTime = styled.div`
+  text-align: right;
+  margin: 0 16px;
+  color: #333;
+`
+
+const EventContent = styled.div`
+  flex-grow: 1;
+  margin: 0 16px;
+`
+
+const EventAuthor = styled.div`
+  text-align: left;
+  color: #333;
+`
+
+const EventRow: React.FC<{
+  game: GameState
+  event: DatedMessage
+  showAuthor?: boolean
+}> = ({ game, event, children, showAuthor = true }) => {
+  return (
+    <EventContainer>
+      <EventTime>
+        <Hours date={event.date} />
+      </EventTime>
+      <EventContent>
+        {children}
+        {showAuthor && <EventAuthor>{getAuthor(game, event)}</EventAuthor>}
+      </EventContent>
+    </EventContainer>
+  )
+}
+
+const DiceContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -8px;
+`
+
+const Die = styled.div`
+  width: 32px;
+  height: 32px;
+  background-color: #5e1224;
+  vertical-align: center;
+  text-align: center;
+  margin: 8px;
+  color: white;
+  line-height: 32px;
+  border-radius: 16px;
+  font-size: 24px;
+`
+
+const DiceEventRow: React.FC<{
+  game: GameState
+  event: DatedMessage
+  action: GameAction & { type: 'dice' }
+}> = ({ event, game, action }) => {
+  const symbols = action.dice.map((side) => {
+    if (side === 'investigation') {
+      return '\u26B2'
+    } else if (side === 'success') {
+      return '\u26E7'
+    } else {
+      return ' '
+    }
+  })
+  return (
+    <EventRow game={game} event={event}>
+      <DiceContainer>
+        {symbols.map((symbol, i) => (
+          <Die key={i}>{symbol}</Die>
+        ))}
+      </DiceContainer>
+    </EventRow>
+  )
+}
+
+const ChatEventRow: React.FC<{
+  game: GameState
+  event: DatedMessage
+  action: GameAction & { type: 'chat' }
+}> = ({ event, game, action }) => (
+  <EventRow game={game} event={event} showAuthor={false}>
+    <span>
+      <b>{getAuthor(game, event)}</b>:{' '}
+    </span>{' '}
+    {action.text}
+  </EventRow>
+)
+
 const GameEventRow: React.FC<{
   game: GameState
   gameEvent: DatedMessage
 }> = React.memo(({ game, gameEvent }) => {
+  const action = gameEvent.action
+  switch (action.type) {
+    case 'dice':
+      return <DiceEventRow game={game} event={gameEvent} action={action} />
+
+    case 'chat':
+      return <ChatEventRow game={game} event={gameEvent} action={action} />
+  }
   return (
     <div>
       <Hours date={gameEvent.date} />
@@ -66,7 +174,7 @@ const ChatBox: React.FC<{
   )
 }
 
-export const GameEventsContainer: React.FC<{
+export const EventsContainer: React.FC<{
   game: GameState
   socket: ClientSocket
   session: SessionState
@@ -78,8 +186,11 @@ export const GameEventsContainer: React.FC<{
     gameEvents.filter((x) => !x).length < 20,
   )
 
+  console.log([socket, game, isLoadingEvents])
+
   // Load game events
   useEffect(() => {
+    console.log('re-render', isLoadingEvents)
     if (!isLoadingEvents) {
       return
     }
@@ -96,6 +207,8 @@ export const GameEventsContainer: React.FC<{
 
     // Calculate start of the inclusive range
     const since = Math.max(until - 20, 0)
+    console.log('loading more', since, until)
+
     if (since < until) {
       socket.send({
         type: 'get',
@@ -127,13 +240,14 @@ export const GameEventsContainer: React.FC<{
     setIsLoadingEvents,
   ])
 
-  const rollSome = (n: number) => (): void => void socket.send({
-    type: 'action',
-    action: {
-      type: 'dice',
-      roll: new Array(n).fill(null)
-    }
-  })
+  const rollSome = (n: number) => (): void =>
+    void socket.send({
+      type: 'action',
+      action: {
+        type: 'dice',
+        roll: new Array(n).fill(null),
+      },
+    })
 
   const rollOne = useCallback(rollSome(1), [socket])
   const rollTwo = useCallback(rollSome(2), [socket])
@@ -180,4 +294,4 @@ export const GameEventsContainer: React.FC<{
   )
 }
 
-export default GameEventsContainer
+export default EventsContainer
