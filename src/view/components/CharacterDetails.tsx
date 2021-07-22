@@ -17,10 +17,6 @@ const Title = styled.p``
 
 const SectionHeader = styled.h2``
 
-interface CharacterDescriptionProps {
-  character: CharacterCard
-}
-
 const abilityNames: Record<Ability, string> = {
   strength: 'Strength',
   agility: 'Agility',
@@ -30,7 +26,9 @@ const abilityNames: Record<Ability, string> = {
   will: 'Will',
 }
 
-const CharacterDetails = ({ character }: CharacterDescriptionProps) => {
+const CharacterDetails: React.FC<{
+  character: CharacterCard
+}> = ({ character }) => {
   return (
     <article>
       <header>

@@ -16,6 +16,17 @@ const GameView = styled.article``
 
 const GameViewState = withVisualState(GameView, (a: GamePage) => a.subPageId)
 
+const isPage = <PageId extends GamePage['subPageId']>(tag: PageId) => (
+  page: GamePage | undefined,
+): page is GamePage & { subPageId: PageId } => {
+  return page ? page.subPageId === tag : false
+}
+
+const isLobbyPage = isPage('lobby')
+const isCharacterSelectionPage = isPage('select-character')
+const isEventsPage = isPage('events')
+const isCharacterPage = isPage('character')
+
 export const GameContainer: React.FC<{
   gameId: string
   socket: ClientSocket
@@ -101,12 +112,10 @@ export const GameContainer: React.FC<{
       {({ state, from, to }) => {
         const states = [state, from, to]
 
-        const lobby = states.find((p) => p?.subPageId === 'lobby')
-        const selectCharacter = states.find(
-          (p) => p?.subPageId === 'select-character',
-        )
-        const events = states.find((p) => p?.subPageId === 'events')
-        const character = states.find((p) => p?.subPageId === 'character')
+        const lobby = states.find(isLobbyPage)
+        const selectCharacter = states.find(isCharacterSelectionPage)
+        const events = states.find(isEventsPage)
+        const character = states.find(isCharacterPage)
 
         return (
           <>
@@ -118,6 +127,7 @@ export const GameContainer: React.FC<{
                 game={game}
                 socket={socket}
                 session={session}
+                characterId={selectCharacter.characterId}
               />
             )}
             {events && (
