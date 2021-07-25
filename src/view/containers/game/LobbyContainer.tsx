@@ -10,6 +10,7 @@ import {
 import { useDispatch, useSelector } from '../../store'
 import { Text } from '../../components/Text'
 import useCards from '../../util/useCards'
+import styled from 'styled-components'
 
 const baseUrl = window.location.protocol + '//' + window.location.host
 
@@ -46,6 +47,10 @@ const PlayerList: React.FC<{
   )
 }
 
+const PageTitle = styled.h1`
+  margin-top: 0;
+`
+
 const LobbyContainer: React.FC<{
   game: GameState
   socket: ClientSocket
@@ -77,7 +82,7 @@ const LobbyContainer: React.FC<{
 
   return (
     <>
-      <h1>{game.name}</h1>
+      <PageTitle>{game.name}</PageTitle>
       <p>Game ID: {game.id}</p>
       <p>
         Share link: {link} <button onClick={copyToClipboard}>Copy</button>

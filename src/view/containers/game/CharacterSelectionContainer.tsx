@@ -1,6 +1,7 @@
 import { go } from 'connected-react-router'
 import React, { useCallback } from 'react'
 import { Link } from 'react-router-dom'
+import styled from 'styled-components'
 import { GameState, SessionState } from '../../../game/resources'
 import { CharacterCard } from '../../../game/rules'
 import { ClientSocket } from '../../ClientSocket'
@@ -33,18 +34,25 @@ const CharacterListDetail: React.FC<{
   )
 }
 
+const PageTitle = styled.h1`
+  margin-top: 0;
+`
+
 const CharacterList: React.FC<{
   game: GameState
   characters: CharacterCard[]
 }> = ({ characters, game }) => {
   return (
-    <ul>
-      {characters.map(({ id, name }) => (
-        <li>
-          <Link to={toSelectCharacterDetailPage(game.id, id)}>{name}</Link>
-        </li>
-      ))}
-    </ul>
+    <>
+      <PageTitle>Characters</PageTitle>
+      <ul>
+        {characters.map(({ id, name }) => (
+          <li>
+            <Link to={toSelectCharacterDetailPage(game.id, id)}>{name}</Link>
+          </li>
+        ))}
+      </ul>
+    </>
   )
 }
 

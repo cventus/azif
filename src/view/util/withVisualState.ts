@@ -65,6 +65,7 @@ export function withVisualState<
     useLayoutEffect(() => {
       const needsToTransition =
         stateName(current.state) !== stateName(desiredState)
+
       if (needsToTransition) {
         const isTransitioning =
           current.from !== undefined || current.to !== undefined
@@ -82,7 +83,11 @@ export function withVisualState<
             isInstant = duration === '0s'
           }
           if (isInstant) {
-            setCurrent({ state: desiredState })
+            if (current.to) {
+              setCurrent({ state: current.to, from: current.state })
+            } else {
+              setCurrent({ state: desiredState })
+            }
           }
         } else {
           // Begin new transition
@@ -91,9 +96,8 @@ export function withVisualState<
             state: current.state,
           })
         }
-      } else if (!deepEqual(current.state, desiredState)) {
+      } else if (current.from || !deepEqual(current.state, desiredState)) {
         setCurrent({
-          ...current,
           state: desiredState,
         })
       }
